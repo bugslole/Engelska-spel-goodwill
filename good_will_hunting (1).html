@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Good Will Hunting — The Game</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
+#gameCanvas{display:block;}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+#hud{position:absolute;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;}
+#chapter-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:#f0e0b0;letter-spacing:3px;text-shadow:0 0 20px rgba(240,224,176,0.5);}
+#chapter-sub{font-family:'Special Elite',serif;font-size:11px;color:#9a8a6a;margin-top:2px;letter-spacing:1px;}
+#stats{display:flex;gap:12px;align-items:center;}
+.stat-box{background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:5px 12px;text-align:center;}
+.stat-label{font-size:9px;color:#777;letter-spacing:2px;text-transform:uppercase;}
+.stat-val{font-size:17px;font-weight:500;color:#f0e0b0;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+#health-wrap{position:absolute;bottom:64px;left:16px;width:220px;}
+#health-label{font-size:9px;color:#aaa;letter-spacing:2px;margin-bottom:4px;}
+#health-bar-bg{width:100%;height:7px;background:rgba(255,255,255,0.12);border-radius:3px;overflow:hidden;}
+#health-bar{height:100%;width:100%;background:linear-gradient(90deg,#c0392b,#e74c3c);border-radius:3px;transition:width 0.3s;}
+#stamina-wrap{position:absolute;bottom:46px;left:16px;width:220px;}
+#stamina-label{font-size:9px;color:#aaa;letter-spacing:2px;margin-bottom:4px;}
+#stamina-bar-bg{width:100%;height:5px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden;}
+#stamina-bar{height:100%;width:100%;background:linear-gradient(90deg,#1a6aaa,#3498db);border-radius:2px;transition:width 0.2s;}
+#controls{position:absolute;bottom:16px;right:16px;text-align:right;}
+.ctrl{font-size:10px;color:#666;margin-top:3px;letter-spacing:1px;}
+.ctrl span{color:#999;font-weight:500;}
+#dialog{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(4,4,8,0.98) 18%);padding:20px 28px 18px;pointer-events:all;display:none;border-top:1px solid rgba(240,224,176,0.12);}
+#dialog-portrait{width:50px;height:50px;border-radius:50%;background:rgba(240,224,176,0.08);border:2px solid rgba(240,224,176,0.25);margin-right:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;}
+#dialog-inner{display:flex;align-items:flex-start;}
+#dialog-right{flex:1;}
+#dialog-speaker{font-family:'Bebas Neue',sans-serif;font-size:17px;color:#f0e0b0;letter-spacing:2px;margin-bottom:5px;}
+#dialog-text{font-family:'Special Elite',serif;font-size:13px;color:#ddd;line-height:1.75;margin-bottom:12px;max-width:620px;white-space:pre-wrap;}
+#dialog-choices{display:flex;flex-direction:column;gap:6px;}
+.choice{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:3px;padding:8px 14px;color:#bbb;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all 0.15s;text-align:left;}
+.choice:hover{background:rgba(240,224,176,0.1);border-color:rgba(240,224,176,0.35);color:#f0e0b0;}
+#combo-display{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:64px;color:#f0e0b0;text-align:center;text-shadow:0 0 40px rgba(240,224,176,0.7),0 4px 0 rgba(0,0,0,0.8);opacity:0;transition:opacity 0.3s;pointer-events:none;letter-spacing:4px;}
+#enemy-health-wrap{position:absolute;top:16px;right:16px;width:200px;display:none;}
+#enemy-name{font-size:9px;color:#e74c3c;letter-spacing:2px;margin-bottom:4px;text-transform:uppercase;font-weight:500;}
+#enemy-bar-bg{width:100%;height:7px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
+#enemy-bar{height:100%;width:100%;background:linear-gradient(90deg,#922b21,#e74c3c);border-radius:3px;transition:width 0.3s;}
+#prompt{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);border:1px solid rgba(240,224,176,0.25);border-radius:4px;padding:7px 18px;font-size:11px;color:#f0e0b0;letter-spacing:1px;display:none;white-space:nowrap;}
+#flash{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;background:rgba(192,57,43,0.35);}
+#notif{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border:1px solid rgba(240,224,176,0.2);border-radius:4px;padding:9px 22px;font-family:'Special Elite',serif;font-size:13px;color:#f0e0b0;opacity:0;transition:opacity 0.4s;text-align:center;pointer-events:none;max-width:440px;line-height:1.5;white-space:pre-wrap;}
+#title-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 50% 40%,#1a1408 0%,#060608 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+#title-screen h1{font-family:'Bebas Neue',sans-serif;font-size:80px;color:#f0e0b0;letter-spacing:10px;text-shadow:0 0 60px rgba(240,224,176,0.4),0 0 120px rgba(240,224,176,0.15);}
+#title-screen h2{font-family:'Special Elite',serif;font-size:15px;color:#6a5a3a;letter-spacing:5px;margin-top:6px;margin-bottom:40px;}
+.line{width:100px;height:1px;background:rgba(240,224,176,0.15);margin:14px auto;}
+.chap-btn{background:transparent;border:1px solid rgba(240,224,176,0.18);color:#999;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px 26px;cursor:pointer;letter-spacing:2px;transition:all 0.2s;margin:4px;}
+.chap-btn:hover,.chap-btn.active{border-color:rgba(240,224,176,0.5);color:#f0e0b0;background:rgba(240,224,176,0.05);}
+#start-btn{background:rgba(240,224,176,0.1);border:1px solid rgba(240,224,176,0.4);color:#f0e0b0;font-family:'Bebas Neue',sans-serif;font-size:24px;padding:13px 52px;cursor:pointer;letter-spacing:5px;transition:all 0.25s;margin-top:28px;}
+#start-btn:hover{background:rgba(240,224,176,0.2);box-shadow:0 0 40px rgba(240,224,176,0.2);}
+#chapter-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;pointer-events:none;transition:opacity 0.7s;}
+#chapter-card-num{font-family:'Bebas Neue',sans-serif;font-size:13px;color:#7a6a4a;letter-spacing:7px;}
+#chapter-card-name{font-family:'Bebas Neue',sans-serif;font-size:56px;color:#f0e0b0;letter-spacing:5px;text-shadow:0 0 50px rgba(240,224,176,0.4);}
+#chapter-card-desc{font-family:'Special Elite',serif;font-size:13px;color:#888;margin-top:8px;letter-spacing:1px;}
+#math-ui{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(4,4,8,0.97);border:1px solid rgba(240,224,176,0.18);border-radius:8px;padding:28px 32px;display:none;pointer-events:all;min-width:420px;max-width:560px;}
+#math-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f0e0b0;letter-spacing:2px;margin-bottom:4px;}
+#math-problem{font-family:'Special Elite',serif;font-size:13px;color:#bbb;line-height:1.9;margin:12px 0 16px;border-left:2px solid rgba(240,224,176,0.2);padding-left:14px;white-space:pre-wrap;}
+#math-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.math-opt{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:3px;padding:10px 14px;color:#bbb;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all 0.15s;text-align:left;}
+.math-opt:hover{background:rgba(240,224,176,0.08);border-color:rgba(240,224,176,0.3);color:#f0e0b0;}
+.math-opt.correct{background:rgba(39,174,96,0.18);border-color:#27ae60;color:#2ecc71;}
+.math-opt.wrong{background:rgba(192,57,43,0.18);border-color:#c0392b;color:#e74c3c;}
+#wave-announce{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-family:'Bebas Neue',sans-serif;font-size:42px;color:#e74c3c;letter-spacing:4px;text-shadow:0 0 30px rgba(231,76,60,0.6);opacity:0;transition:opacity 0.5s;pointer-events:none;}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="ui">
+  <div id="hud">
+    <div><div id="chapter-title">GOOD WILL HUNTING</div><div id="chapter-sub">A STORY ABOUT WASTED GENIUS</div></div>
+    <div id="stats">
+      <div class="stat-box"><div class="stat-label">Chapter</div><div class="stat-val" id="chap-num">—</div></div>
+      <div class="stat-box"><div class="stat-label">Score</div><div class="stat-val" id="score-val">0</div></div>
+    </div>
+  </div>
+  <div id="health-wrap"><div id="health-label">WILL — HEALTH</div><div id="health-bar-bg"><div id="health-bar"></div></div></div>
+  <div id="stamina-wrap"><div id="stamina-label">STAMINA</div><div id="stamina-bar-bg"><div id="stamina-bar"></div></div></div>
+  <div id="enemy-health-wrap"><div id="enemy-name">ENEMY</div><div id="enemy-bar-bg"><div id="enemy-bar"></div></div></div>
+  <div id="controls"><div class="ctrl"><span>WASD</span> MOVE</div><div class="ctrl"><span>MOUSE DRAG</span> LOOK</div><div class="ctrl"><span>J / K / L</span> PUNCH / KICK / BLOCK</div><div class="ctrl"><span>E</span> INTERACT</div></div>
+  <div id="combo-display"></div>
+  <div id="prompt"></div>
+  <div id="flash"></div>
+  <div id="notif"></div>
+  <div id="wave-announce"></div>
+  <div id="chapter-card"><div id="chapter-card-num"></div><div id="chapter-card-name"></div><div id="chapter-card-desc"></div></div>
+  <div id="dialog">
+    <div id="dialog-inner">
+      <div id="dialog-portrait"></div>
+      <div id="dialog-right">
+        <div id="dialog-speaker"></div>
+        <div id="dialog-text"></div>
+        <div id="dialog-choices"></div>
+      </div>
+    </div>
+  </div>
+  <div id="math-ui">
+    <div id="math-title">PROFESSOR LAMBEAU'S PROBLEM</div>
+    <div id="math-problem"></div>
+    <div id="math-options"></div>
+  </div>
+</div>
+
+<div id="title-screen">
+  <h1>GOOD WILL HUNTING</h1>
+  <h2>THE GAME — 1997</h2>
+  <div class="line"></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:4px;">
+    <button class="chap-btn active" onclick="selectChapter(0)">CH.I — MIT NIGHT SHIFT</button>
+    <button class="chap-btn" onclick="selectChapter(1)">CH.II — SOUTH BOSTON</button>
+    <button class="chap-btn" onclick="selectChapter(2)">CH.III — SEAN'S OFFICE</button>
+  </div>
+  <button id="start-btn" onclick="startGame()">BEGIN</button>
+  <div style="margin-top:20px;font-size:10px;color:#3a3020;letter-spacing:2px;">WASD MOVE • MOUSE LOOK • J PUNCH • K KICK • L BLOCK • E INTERACT</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== RENDERER =====
+const W=window.innerWidth,H=window.innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
+renderer.setSize(W,H);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
+renderer.outputEncoding=THREE.sRGBEncoding;
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(68,W/H,0.05,120);
+
+// ===== STATE =====
+let selChap=0,curChap=-1;
+let playerHP=100,playerSt=100,enemyHP=100;
+let score=0,combo=0,lastHit=0;
+let dialogOpen=false,mathOpen=false,inCombat=false;
+let mathSolved=0,therapyStage=0;
+let playerPos=new THREE.Vector3(0,0,6);
+let camYaw=0,camPitch=0;
+let isDrag=false,lastMX=0,lastMY=0;
+const keys={};
+let enemies=[],interactables=[],activeEnemy=null;
+let blockTimer=0,staminaTimer=0,wave=0;
+let seanMesh=null,playerMesh=null;
+const clock=new THREE.Clock();
+let T=0;
+
+// ===== UTILS =====
+const rnd=(a,b)=>Math.random()*(b-a)+a;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function showNotif(txt,ms=2600){
+  const n=document.getElementById('notif');
+  n.textContent=txt;n.style.opacity='1';
+  clearTimeout(n._t);n._t=setTimeout(()=>n.style.opacity='0',ms);
+}
+function showWave(txt){
+  const w=document.getElementById('wave-announce');
+  w.textContent=txt;w.style.opacity='1';
+  setTimeout(()=>w.style.opacity='0',1800);
+}
+function showPrompt(t){const p=document.getElementById('prompt');p.textContent=t;p.style.display=t?'block':'none';}
+function flashRed(){const f=document.getElementById('flash');f.style.background='rgba(192,57,43,0.4)';f.style.opacity='0.7';setTimeout(()=>f.style.opacity='0',200);}
+function flashGold(){const f=document.getElementById('flash');f.style.background='rgba(240,200,60,0.25)';f.style.opacity='0.6';setTimeout(()=>{f.style.opacity='0';},200);}
+function updateHP(){document.getElementById('health-bar').style.width=clamp(playerHP,0,100)+'%';}
+function updateSt(){document.getElementById('stamina-bar').style.width=clamp(playerSt,0,100)+'%';}
+function updateEHP(){document.getElementById('enemy-bar').style.width=clamp(enemyHP,0,100)+'%';}
+function addScore(n){score+=n;document.getElementById('score-val').textContent=score;}
+function showCombo(txt){
+  const c=document.getElementById('combo-display');
+  c.textContent=txt;c.style.opacity='1';
+  clearTimeout(c._t);c._t=setTimeout(()=>c.style.opacity='0',900);
+}
+
+// ===== MATERIAL HELPERS =====
+function M(color,rough=0.75,metal=0,emissive=0,emInt=0){
+  return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,emissive,emissiveIntensity:emInt});
+}
+function B(w,h,d,mat,x,y,z,ry=0,grp){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(x,y,z);if(ry)m.rotation.y=ry;
+  m.castShadow=m.receiveShadow=true;
+  (grp||scene).add(m);return m;
+}
+function addLight(type,color,intensity,x,y,z,dist=0){
+  let l;
+  if(type==='point'){l=new THREE.PointLight(color,intensity,dist);}
+  else if(type==='dir'){l=new THREE.DirectionalLight(color,intensity);l.castShadow=true;}
+  else{l=new THREE.AmbientLight(color,intensity);}
+  l.position.set(x,y,z);scene.add(l);return l;
+}
+
+// ===== GRID FLOOR HELPER =====
+function makeGridFloor(size,divs,color1,color2){
+  const g=new THREE.GridHelper(size,divs,color1,color2);
+  g.position.y=0.01;scene.add(g);return g;
+}
+
+// ===== BUILD PLAYER =====
+function buildPlayer(){
+  if(playerMesh){scene.remove(playerMesh);playerMesh=null;}
+  const g=new THREE.Group();
+  // Torso — bright blue janitor uniform
+  B(0.38,0.82,0.28,M(0x3a6abf,0.8),0,0.83,0,0,g);
+  // Head — visible skin tone
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.21,12,10),M(0xd4956b,0.7));
+  head.position.set(0,1.38,0);head.castShadow=true;g.add(head);
+  // Dark hair
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8,0,Math.PI*2,0,Math.PI*0.42),M(0x1e0e04,0.9));
+  hair.position.set(0,1.44,0);g.add(hair);
+  // Arms
+  [-0.28,0.28].forEach((x,i)=>{
+    B(0.12,0.62,0.12,M(0x3a6abf,0.8),x,0.72,0,0,g);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6),M(0xd4956b,0.7));
+    hand.position.set(x+(i===0?-0.04:0.04),0.38,0);g.add(hand);
+  });
+  // Legs
+  [-0.1,0.1].forEach(x=>{
+    B(0.14,0.68,0.14,M(0x1c2040,0.9),x,0.06,0,0,g);
+    B(0.15,0.08,0.24,M(0x111111,0.8),x,-0.27,0.04,0,g);
+  });
+  playerMesh=g;scene.add(g);
+}
+function syncPlayer(){
+  if(!playerMesh)return;
+  playerMesh.position.set(playerPos.x,0,playerPos.z);
+  playerMesh.rotation.y=camYaw+Math.PI;
+  if(keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']){
+    playerMesh.children[0].position.y=0.83+Math.sin(T*12)*0.015;
+  }
+}
+
+// ===== ENEMY CLASS =====
+class Enemy{
+  constructor(x,z,type='thug'){
+    this.type=type;this.maxHp=type==='cop'?120:100;this.hp=this.maxHp;
+    this.pos=new THREE.Vector3(x,0,z);
+    this.state='idle';this.atkTimer=0;this.stunTimer=0;
+    this.mesh=this._build();scene.add(this.mesh);
+  }
+  _build(){
+    const g=new THREE.Group();
+    const tc=this.type==='cop'?0x1a4080:this.type==='gang'?0x5a1a1a:0x3a2a1a;
+    const hc=this.type==='cop'?0xc8a870:0xb87850;
+    B(0.36,0.84,0.26,M(tc,0.8),0,0.84,0,0,g);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.2,10,8),M(hc,0.7));
+    head.position.set(0,1.36,0);g.add(head);
+    if(this.type==='cop'){
+      B(0.44,0.11,0.44,M(0x0d2a5a,0.8),0,1.52,0,0,g);
+      B(0.38,0.06,0.16,M(0x0d2a5a,0.8),0,1.48,0.22,0,g);
+    } else {
+      const hair=new THREE.Mesh(new THREE.SphereGeometry(0.21,10,6,0,Math.PI*2,0,Math.PI*0.4),M(0x1a0a02,0.9));
+      hair.position.set(0,1.41,0);g.add(hair);
+    }
+    [-0.27,0.27].forEach(x=>B(0.12,0.6,0.12,M(tc,0.8),x,0.72,0,0,g));
+    [-0.1,0.1].forEach(x=>B(0.13,0.66,0.13,M(0x111,0.9),x,0.07,0,0,g));
+    // Name label stored for enemy-bar
+    this._label=this.type==='cop'?'BOSTON PD':this.type==='gang'?'GANG MEMBER':'THUG';
+    return g;
+  }
+  update(dt,pp){
+    if(this.state==='dead')return;
+    this.stunTimer=Math.max(0,this.stunTimer-dt);
+    this.atkTimer=Math.max(0,this.atkTimer-dt);
+    if(this.stunTimer>0){
+      this.mesh.position.copy(this.pos);
+      this.mesh.rotation.z=Math.sin(T*30)*0.08;
+      return;
+    }
+    this.mesh.rotation.z=0;
+    const dist=this.pos.distanceTo(pp);
+    if(dist<9)this.state='chase';
+    if(this.state==='chase'){
+      if(dist>1.6){
+        const dir=new THREE.Vector3().subVectors(pp,this.pos).normalize();
+        this.pos.addScaledVector(dir,dt*2.0);
+        this.mesh.lookAt(pp.x,this.pos.y+1,pp.z);
+      }
+      if(dist<1.9&&this.atkTimer<=0){
+        this.atkTimer=1.4+Math.random()*0.6;
+        if(blockTimer>0.05){showCombo('BLOCKED!');flashGold();addScore(15);}
+        else{playerHP=Math.max(0,playerHP-10);updateHP();flashRed();showCombo('OUCH!');if(playerHP<=0)gameOver();}
+      }
+    }
+    this.mesh.position.copy(this.pos);
+    this.mesh.position.y=Math.sin(T*5)*0.018*(this.state==='chase'?1:0);
+  }
+  hit(dmg){
+    if(this.state==='dead')return false;
+    this.hp-=dmg;this.stunTimer=0.45;
+    updateEHP();
+    if(this.hp<=0){this._die();return true;}
+    return false;
+  }
+  _die(){
+    this.state='dead';addScore(250);
+    this.mesh.rotation.z=Math.PI/2;this.mesh.position.y=-0.15;
+    setTimeout(()=>{scene.remove(this.mesh);enemies=enemies.filter(e=>e!==this);onEnemyDied();},1800);
+  }
+}
+function onEnemyDied(){
+  const alive=enemies.filter(e=>e.state!=='dead');
+  if(alive.length===0&&inCombat){
+    inCombat=false;document.getElementById('enemy-health-wrap').style.display='none';
+    if(curChap===1){
+      wave++;
+      if(wave===1){
+        showWave('WAVE 2 — THE COPS SHOW UP!');
+        setTimeout(()=>spawnWave(1),2000);
+      } else {
+        showNotif('Last one down. Sirens in the distance...\nChuckie drags you off the street.',3500);
+      }
+    }
+  } else if(alive.length>0){
+    activeEnemy=alive[0];
+    enemyHP=activeEnemy.hp/activeEnemy.maxHp*100;
+    document.getElementById('enemy-name').textContent=activeEnemy._label;
+    updateEHP();
+  }
+}
+
+// ===== COMBAT =====
+function getNearEnemy(){
+  let best=null,bd=99;
+  const pp=new THREE.Vector3(playerPos.x,1,playerPos.z);
+  enemies.filter(e=>e.state!=='dead').forEach(e=>{
+    const d=pp.distanceTo(e.pos);if(d<3.2&&d<bd){bd=d;best=e;}
+  });
+  return best;
+}
+function doPunch(){
+  if(playerSt<14){showNotif('Too tired!');return;}
+  playerSt=Math.max(0,playerSt-14);updateSt();
+  const t=getNearEnemy();
+  if(!t){showCombo('MISS');return;}
+  const dmg=16+Math.floor(Math.random()*10);
+  combo=Date.now()-lastHit<900?Math.min(combo+1,10):1;
+  lastHit=Date.now();
+  const dead=t.hit(dmg);
+  enemyHP=Math.max(0,t.hp/t.maxHp*100);updateEHP();
+  if(!dead){activeEnemy=t;document.getElementById('enemy-name').textContent=t._label;}
+  addScore(combo>3?60:25);
+  const labels=['JAB!','RIGHT HOOK!','STRAIGHT!','COMBO x'+combo,'WILL POWER!'];
+  showCombo(combo>=4?'COMBO x'+combo:labels[Math.floor(Math.random()*3)]);
+  flashGold();
+}
+function doKick(){
+  if(playerSt<22){showNotif('Too tired!');return;}
+  playerSt=Math.max(0,playerSt-22);updateSt();
+  const t=getNearEnemy();
+  if(!t){showCombo('MISS');return;}
+  const dmg=26+Math.floor(Math.random()*12);
+  combo=Math.min(combo+2,10);lastHit=Date.now();
+  const dead=t.hit(dmg);
+  enemyHP=Math.max(0,t.hp/t.maxHp*100);updateEHP();
+  if(!dead){activeEnemy=t;document.getElementById('enemy-name').textContent=t._label;}
+  addScore(45);showCombo('KICK! '+dmg+'dmg');flashGold();
+}
+function doBlock(){blockTimer=0.7;showCombo('BLOCKING...');}
+function gameOver(){
+  showNotif('Will hits the ground.\nCops on the way. Try again.',3000);
+  setTimeout(()=>{playerHP=100;updateHP();showNotif('Back on your feet.',1500);},3500);
+}
+
+// ===== SPAWNWAVE =====
+function spawnWave(w){
+  inCombat=true;
+  document.getElementById('enemy-health-wrap').style.display='block';
+  let cfgs=w===0
+    ?[{x:-3.5,z:0,t:'gang'},{x:3,z:-2,t:'gang'},{x:0,z:-5,t:'thug'}]
+    :[{x:-4,z:1,t:'cop'},{x:4,z:-1,t:'cop'},{x:0,z:-6,t:'cop'},{x:-2,z:-3.5,t:'gang'}];
+  cfgs.forEach(c=>{const e=new Enemy(c.x,c.z,c.t);enemies.push(e);});
+  activeEnemy=enemies[0];
+  enemyHP=100;updateEHP();
+  document.getElementById('enemy-name').textContent=activeEnemy._label;
+}
+
+// ===== SCENE CLEAR =====
+function clearScene(){
+  while(scene.children.length)scene.remove(scene.children[0]);
+  enemies=[];interactables=[];seanMesh=null;
+  document.getElementById('enemy-health-wrap').style.display='none';
+}
+
+// ===========================
+// CHAPTER 0: MIT NIGHT SHIFT
+// ===========================
+const mathData=[
+  {q:"Lambeau's Problem #1:\n\nProve the number of primes of the form 4k+3\nis infinite. Which method works?",
+   opts:["Dirichlet's theorem on arithmetic progressions","Euclid-style contradiction with modular arithmetic","Riemann zeta function zero distribution","Fermat's little theorem directly"],
+   cor:1,note:"Assume finite set, take product of all, subtract 1 — you get a new prime. Modular contradiction."},
+  {q:"Problem #2:\n\nFind the characteristic polynomial of\nthe Petersen graph. What is χ(G, λ)?",
+   opts:["(λ−3)(λ+2)⁴(λ−1)⁵","(λ−3)(λ+2)³(λ−1)⁶","(λ+3)(λ−2)⁴(λ+1)⁵","(λ−3)(λ+2)⁵(λ−1)⁴"],
+   cor:0,note:"Petersen graph eigenvalues: 3 (×1), −2 (×4), 1 (×5). Classic result."},
+  {q:"Problem #3:\n\nProve P ≠ NP.\n\nWill stares at it for 30 seconds,\nthen writes one word on the board:",
+   opts:['"Obvious."','"Impossible."','"Ask Lambeau."','"$1,000,000."'],
+   cor:3,note:"The Clay Millennium Prize. Will knows it's unsolved — and smiles."},
+];
+let boardTex=null,bCanvas=null,lambeauMesh=null,exitArrow=null,exitLight=null;
+
+function buildMIT(){
+  scene.background=new THREE.Color(0x0e0e1e);
+  scene.fog=new THREE.FogExp2(0x0e0e1e,0.045);
+
+  // STRONG ambient — key fix
+  addLight('ambient',0x6677aa,1.4,0,0,0);
+  // Main overhead directional
+  const dir=addLight('dir',0xffffff,1.8,4,12,3);
+  dir.shadow.mapSize.set(1024,1024);dir.shadow.camera.near=0.5;dir.shadow.camera.far=40;
+  // Chalkboard glow — bright green
+  addLight('point',0x44ffaa,3.0,0,2.2,1.6,7);
+  // Corridor strip lights
+  for(let z=-8;z<=8;z+=5){
+    addLight('point',0x8899cc,1.2,0,3.2,z,10);
+    addLight('point',0x5566bb,0.8,-5,2.8,z,9);
+    addLight('point',0x5566bb,0.8,5,2.8,z,9);
+  }
+
+  // FLOOR — lighter, visible tiles
+  const floorMat=M(0x1e1e30,0.9);
+  B(24,0.1,24,floorMat,0,-0.05,0);
+  makeGridFloor(24,24,0x334466,0x223355);
+
+  // CEILING
+  B(24,0.12,24,M(0x111120,1),0,3.7,0);
+  // Ceiling light strips (emissive)
+  for(let z=-6;z<=6;z+=4){
+    B(0.5,0.05,1.4,M(0xccddff,0.3,0,0x8899ff,1.5),0,3.65,z);
+  }
+
+  // WALLS — visible medium grey-blue
+  B(24,3.8,0.25,M(0x1a1a2e,0.9),0,1.85,-11.8);
+  B(24,3.8,0.25,M(0x1a1a2e,0.9),0,1.85,11.8);
+  B(0.25,3.8,24,M(0x1a1a2e,0.9),-8.1,1.85,0);
+  B(0.25,3.8,24,M(0x1a1a2e,0.9),8.1,1.85,0);
+
+  // Wall baseboard
+  B(24,0.12,0.12,M(0x334466,0.7),0,0.06,-11.7);
+  B(24,0.12,0.12,M(0x334466,0.7),0,0.06,11.7);
+
+  // LOCKERS — brighter steel blue
+  for(let side of[-1,1]) for(let i=0;i<7;i++){
+    const lx=-4.2+i*1.25;
+    B(1.1,1.95,0.4,M(0x2a3a5a,0.7),lx,0.975,side*11.2);
+    B(1.0,0.02,0.36,M(0x3a5a8a,0.5),lx,1.93,side*11.2-0.02);
+    // locker handle
+    B(0.06,0.18,0.04,M(0x8899bb,0.5,0.4),lx+0.3,0.97,side*(11.2-0.21));
+  }
+
+  // DESKS + CHAIRS — all facing the chalkboard (toward -Z / front of room)
+  for(let row=0;row<2;row++) for(let col=0;col<3;col++){
+    const dx=-2.5+col*2.4, dz=3.5+row*3.0;
+    // Desk top
+    B(1.2,0.07,0.65,M(0x7a5030,0.75),dx,0.77,dz);
+    // Four legs
+    [[-0.5,-0.25],[0.5,-0.25],[-0.5,0.25],[0.5,0.25]].forEach(([ox,oz])=>
+      B(0.07,0.77,0.07,M(0x5a3820,0.8),dx+ox,0.385,dz+oz));
+    // Paper on desk
+    B(0.28,0.01,0.2,M(0xeeeedd,0.9),dx-0.1,0.785,dz-0.05);
+
+    // PROPER CHAIR facing toward board (toward -Z)
+    // Seat
+    B(0.52,0.07,0.50,M(0x253050,0.85),dx,0.50,dz+1.1);
+    // Backrest (tall, upright)
+    B(0.50,0.60,0.06,M(0x253050,0.85),dx,0.85,dz+1.35);
+    // Two horizontal slats in backrest
+    B(0.44,0.05,0.05,M(0x1a2040,0.9),dx,0.68,dz+1.35);
+    B(0.44,0.05,0.05,M(0x1a2040,0.9),dx,0.82,dz+1.35);
+    // Four legs
+    [[-0.22,-0.20],[0.22,-0.20],[-0.22,0.20],[0.22,0.20]].forEach(([ox,oz])=>
+      B(0.06,0.50,0.06,M(0x1a2040,0.9),dx+ox,0.25,dz+1.1+oz));
+    // Armrests
+    B(0.05,0.04,0.44,M(0x1e2844,0.9),dx-0.25,0.62,dz+1.14);
+    B(0.05,0.04,0.44,M(0x1e2844,0.9),dx+0.25,0.62,dz+1.14);
+  }
+
+  // CHALKBOARD
+  B(3.6,2.0,0.07,M(0x7a4e1a,0.8),0,1.85,1.9);
+  B(3.3,1.72,0.08,M(0x0d4022,0.95),0,1.85,1.95);
+  bCanvas=document.createElement('canvas');bCanvas.width=512;bCanvas.height=256;
+  boardTex=new THREE.CanvasTexture(bCanvas);drawBoard();
+  const bp=new THREE.Mesh(new THREE.PlaneGeometry(3.1,1.6),new THREE.MeshBasicMaterial({map:boardTex,transparent:true}));
+  bp.position.set(0,1.85,2.0);scene.add(bp);
+
+  // Chalk tray
+  B(3.3,0.06,0.15,M(0x5a3a10,0.8),0,0.92,1.92);
+  B(0.05,0.12,0.06,M(0xeeeedd,0.8),0.5,0.97,1.9);
+
+  // Mop + bucket
+  B(0.32,0.36,0.32,M(0x3a5a3a,0.8),5,0.18,-1.5);
+  B(0.04,1.1,0.04,M(0x8a6a40,0.7),5,0.73,-1.5);
+  B(0.18,0.04,0.18,M(0xddddbb,0.8),5,1.26,-1.5);
+
+  // Clock on wall
+  const clockMesh=new THREE.Mesh(new THREE.CircleGeometry(0.28,16),M(0xeeeedd,0.8));
+  clockMesh.position.set(-5,3.1,-11.7);clockMesh.rotation.x=0.05;scene.add(clockMesh);
+
+  playerPos.set(0,0,10);camYaw=Math.PI;buildPlayer();syncPlayer();
+  document.getElementById('chapter-title').textContent='CH.I — MIT NIGHT SHIFT';
+  document.getElementById('chap-num').textContent='I';
+  mathSolved=0;lambeauMesh=null;exitArrow=null;exitLight=null;
+  interactables=[{pos:new THREE.Vector3(0,1.85,2),range:3.5,label:'Press E — examine the chalkboard',action:openMath}];
+}
+
+// Builds Lambeau NPC at corridor end
+function spawnLambeau(){
+  if(lambeauMesh)return;
+  const g=new THREE.Group();
+  // Body — grey suit
+  B(0.42,0.92,0.30,M(0x4a4a5a,0.8),0,0.86,0,0,g);
+  // White shirt / collar
+  B(0.18,0.14,0.12,M(0xeeeedd,0.85),0,1.18,0.14,0,g);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,10),M(0xd0a070,0.7));
+  head.position.set(0,1.44,0);g.add(head);
+  // Grey hair
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(0.23,10,8,0,Math.PI*2,0,Math.PI*0.42),M(0xaaaaaa,0.85));
+  hair.position.set(0,1.50,0);g.add(hair);
+  // Arms
+  [-0.32,0.32].forEach((x,i)=>{
+    B(0.12,0.66,0.12,M(0x4a4a5a,0.8),x,0.74,0,0,g);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),M(0xd0a070,0.7));
+    hand.position.set(x+(i===0?-0.04:0.04),0.40,0.06);g.add(hand);
+  });
+  // Legs
+  [-0.1,0.1].forEach(x=>{
+    B(0.14,0.70,0.14,M(0x3a3a4a,0.9),x,0.08,0,0,g);
+    B(0.15,0.08,0.26,M(0x222,0.8),x,-0.28,0.04,0,g);
+  });
+  // Place Lambeau at the far end of the corridor (negative Z = board side)
+  g.position.set(0,0,-8);
+  g.rotation.y=0; // facing toward player
+  scene.add(g);lambeauMesh=g;
+
+  // Exclamation "!" floating above his head
+  const excMat=new THREE.MeshStandardMaterial({color:0xffdd00,emissive:0xffcc00,emissiveIntensity:2.5});
+  const excB=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.45,0.08),excMat);
+  excB.position.set(0,2.28,0);g.add(excB);
+  const excDot=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.08),excMat);
+  excDot.position.set(0,1.78,0);g.add(excDot);
+
+  // Bright yellow light around him
+  const gl=new THREE.PointLight(0xffee44,2.5,6);gl.position.set(0,2,-8);scene.add(gl);
+
+  // Glowing floor arrow pointing toward Lambeau from player start
+  buildExitArrow();
+
+  // Add interact
+  interactables.push({pos:new THREE.Vector3(0,1,-8),range:3.5,label:'Press E — talk to Professor Lambeau',action:openLambeauDialog});
+}
+
+function buildExitArrow(){
+  // A row of 4 glowing chevrons on the floor pointing from board toward Lambeau
+  const arrowMat=new THREE.MeshStandardMaterial({color:0xffee22,emissive:0xffcc00,emissiveIntensity:2.0});
+  exitArrow=new THREE.Group();
+  for(let i=0;i<4;i++){
+    const z=-2.5-i*1.5;
+    // Left wing
+    const l=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.06,0.12),arrowMat);
+    l.position.set(-0.28,0.05,z);l.rotation.y=Math.PI*0.22;exitArrow.add(l);
+    // Right wing
+    const r=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.06,0.12),arrowMat);
+    r.position.set(0.28,0.05,z);r.rotation.y=-Math.PI*0.22;exitArrow.add(r);
+  }
+  scene.add(exitArrow);
+  exitLight=new THREE.PointLight(0xffee44,1.2,8);exitLight.position.set(0,0.5,-5);scene.add(exitLight);
+}
+
+function openLambeauDialog(){
+  openDialog('PROF. LAMBEAU','🎓',
+    '"You solved all three. In one night. Anonymously."\n\nHe holds up the chalk still on the board.\n\n"I\'ve been at MIT for 22 years. I\'ve never seen anything like this."\n\n"Who are you?"',
+    [{text:'"Nobody. Just the janitor."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{document.getElementById('title-screen').style.display='flex';},5500);}},
+     {text:'"Someone who can solve your problems."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{document.getElementById('title-screen').style.display='flex';},5500);}}]);
+}
+
+function drawBoard(){
+  const c=bCanvas.getContext('2d');
+  c.fillStyle='#0d4022';c.fillRect(0,0,512,256);
+  c.fillStyle='rgba(240,240,210,0.82)';c.font='bold 15px monospace';
+  c.fillText('Graph homomorphism f: G → H',12,26);
+  c.font='13px monospace';c.fillStyle='rgba(180,240,180,0.7)';
+  c.fillText('∀{u,v}∈E(G) ⟹ {f(u),f(v)}∈E(H)',12,48);
+  c.fillText('χ(G,k) = Σ (-1)^|A| · k^c(A)',12,68);
+  c.fillText('         A ⊆ E(G)',12,86);
+  c.fillStyle='rgba(255,255,160,0.6)';c.font='12px monospace';
+  c.fillText('Show primes ≡ 3 (mod 4) are infinite...',12,112);
+  c.fillText('Petersen graph: χ(G,λ) = ?',12,130);
+  if(mathSolved<3){
+    c.fillStyle='rgba(255,80,80,0.95)';c.font='bold 13px monospace';
+    c.fillText('['+mathSolved+'/3 solved]  Press E to solve',12,196);
+  } else {
+    // Big green solved banner
+    c.fillStyle='rgba(40,220,120,0.95)';c.font='bold 16px monospace';
+    c.fillText('✓ ALL 3 SOLVED',12,185);
+    c.fillStyle='rgba(255,230,50,1.0)';c.font='bold 14px monospace';
+    c.fillText('→ Follow the yellow arrows →',12,210);
+    c.fillText('  Talk to LAMBEAU at corridor end',12,232);
+  }
+  boardTex.needsUpdate=true;
+}
+
+function openMath(){
+  if(mathSolved>=3){showNotif("All solved. Lambeau is looking for you.");return;}
+  mathOpen=true;
+  const d=mathData[mathSolved];
+  document.getElementById('math-problem').textContent=d.q;
+  document.getElementById('math-ui').style.display='block';
+  const op=document.getElementById('math-options');op.innerHTML='';
+  d.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='math-opt';b.textContent=o;
+    b.onclick=()=>{
+      const btns=op.querySelectorAll('.math-opt');btns.forEach(x=>x.onclick=null);
+      if(i===d.cor){
+        b.classList.add('correct');mathSolved++;addScore(350);
+        showNotif('CORRECT\n'+d.note,3000);
+        setTimeout(()=>{document.getElementById('math-ui').style.display='none';mathOpen=false;drawBoard();
+          if(mathSolved===3){
+            showNotif('ALL 3 SOLVED!\nFollow the yellow arrows — find Lambeau at the end of the hall.',4000);
+            spawnLambeau();
+          }
+        },1300);
+      } else {
+        b.classList.add('wrong');btns[d.cor].classList.add('correct');
+        showNotif("Wrong. Will wouldn't hesitate.",2000);
+        setTimeout(()=>{document.getElementById('math-ui').style.display='none';mathOpen=false;},1300);
+      }
+    };
+    op.appendChild(b);
+  });
+}
+
+// ==============================
+// CHAPTER 1: SOUTH BOSTON STREET
+// ==============================
+function buildSouthBoston(){
+  scene.background=new THREE.Color(0x120e08);
+  scene.fog=new THREE.FogExp2(0x120e08,0.042);
+
+  // Brighter ambient for street
+  addLight('ambient',0x3a2a18,1.6,0,0,0);
+  // Orange street lamp — strong
+  addLight('point',0xff9933,4.0,-2,5.5,0,20);
+  addLight('point',0xff8822,2.5,5,4.8,-5,16);
+  addLight('point',0x5566aa,1.0,-6,3,-8,14);
+  // Fill from buildings
+  addLight('point',0xffbb66,1.5,8,3,4,18);
+
+  // ROAD
+  B(16,0.12,28,M(0x1c1c1c,0.95),0,-0.06,0);
+  makeGridFloor(28,28,0x2a2010,0x1e1610);
+  // Road lines
+  for(let z=-10;z<=10;z+=3)B(0.15,0.02,1.4,M(0xffffff,0.9,0,0xddddaa,0.3),0,0.07,z);
+
+  // SIDEWALKS
+  B(8,0.16,28,M(0x2a2820,0.9),-10,0,0);
+  B(8,0.16,28,M(0x2a2820,0.9),10,0,0);
+  // Curb
+  B(0.2,0.14,28,M(0x3a3830,0.8),-6,0.07,0);
+  B(0.2,0.14,28,M(0x3a3830,0.8),6,0.07,0);
+
+  // BUILDINGS — visible brick-ish colour
+  const buildingColors=[0x2a1c14,0x1a1a22,0x20180e,0x141a14];
+  for(let s of[-1,1]) for(let i=0;i<5;i++){
+    const bh=rnd(5,10),bw=rnd(3,5.5),bz=-10+i*5.2;
+    const bc=buildingColors[Math.floor(Math.random()*buildingColors.length)];
+    B(bw,bh,3.8,M(bc,0.9),s*(8+bw/2),bh/2,bz);
+    // Lit windows
+    for(let wy=0.8;wy<bh-0.8;wy+=1.5) for(let wx=-1;wx<=1;wx++){
+      if(Math.random()>0.3){
+        const warm=Math.random()>0.3;
+        const wc=warm?0xffcc66:0x6688cc;
+        B(0.5,0.65,0.06,M(0x0a0806,0.3,0,wc,rnd(0.5,1.2)),s*(8+bw/2)+wx*0.9,wy+0.5,bz+1.92);
+        if(Math.abs(s*(8+bw/2)+wx*0.9)<12)addLight('point',warm?0xffaa44:0x4466aa,0.3,s*(8+bw/2)+wx*0.9,wy+0.9,bz+1.5,4);
+      }
+    }
+  }
+
+  // STREET LAMP post
+  B(0.12,5.5,0.12,M(0x4a4a4a,0.7),-2,2.75,0);
+  B(1.5,0.1,0.1,M(0x4a4a4a,0.7),-2,5.56,0);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6),M(0xffeecc,0.2,0,0xffcc66,4));
+  bulb.position.set(-2.75,5.56,0);scene.add(bulb);
+
+  // DUMPSTER
+  B(1.4,0.9,0.7,M(0x1e4028,0.85),-4.8,0.45,-3);
+  B(1.3,0.12,0.65,M(0x2a5a34,0.8),-4.8,0.91,-3);
+  B(0.5,0.35,0.45,M(0x2a1a0a,0.9),-3.5,0.18,-1);
+
+  // Puddle / pavement detail
+  const puddleMat=new THREE.MeshStandardMaterial({color:0x223366,roughness:0.1,metalness:0.5});
+  const pud=new THREE.Mesh(new THREE.CircleGeometry(0.8,12),puddleMat);
+  pud.rotation.x=-Math.PI/2;pud.position.set(2,0.02,2);scene.add(pud);
+
+  playerPos.set(0,0,8);camYaw=Math.PI;buildPlayer();syncPlayer();
+  document.getElementById('chapter-title').textContent='CH.II — SOUTH BOSTON';
+  document.getElementById('chap-num').textContent='II';
+  wave=0;
+  showWave('WAVE 1 — GANG FIGHT!');
+  setTimeout(()=>spawnWave(0),1200);
+  interactables=[];
+}
+
+// ==============================
+// CHAPTER 2: SEAN'S OFFICE
+// ==============================
+const therapyLines=[
+  {spk:"DR. SEAN MAGUIRE",ico:"👨‍⚕️",
+   txt:"\"Sit down, Will.\"\n\nHe leans back. Holds up your file like it weighs nothing.\n\n\"Remarkable. But I think you're just a kid who's never lost anything he loves.\"",
+   choices:[
+     {t:'"You don\'t know me."',pts:10,next:1},
+     {t:'"...okay."',pts:20,next:1},
+     {t:'"I read your book. Mediocre."',pts:5,next:1}
+   ]},
+  {spk:"DR. SEAN MAGUIRE",ico:"👨‍⚕️",
+   txt:"He pulls out a photograph. His late wife.\n\n\"I didn't sleep the night we met. I just lay there counting the minutes until I could call her. You ever had that?\"",
+   choices:[
+     {t:'"...once."',pts:25,next:2},
+     {t:'"Sounds like weakness."',pts:5,next:2},
+     {t:'"Why are you telling me this?"',pts:15,next:2}
+   ]},
+  {spk:"DR. SEAN MAGUIRE",ico:"👨‍⚕️",
+   txt:"He looks you dead in the eye.\n\n\"It's not your fault.\"\n\nAgain. Quieter.\n\n\"It's not your fault.\"\n\nAgain.",
+   choices:[
+     {t:'"I know."',pts:5,next:3,wall:true},
+     {t:'"Stop saying that."',pts:5,next:3,wall:true},
+     {t:'[Let it through. Say nothing.]',pts:60,next:'break',wall:false}
+   ]},
+  {spk:"DR. SEAN MAGUIRE",ico:"👨‍⚕️",
+   txt:"\"The wall stays up. He tries again next session.\"\n\nBut something is loosening.",
+   choices:[{t:'[Continue]',pts:0,next:'break'}]},
+  {spk:"WILL HUNTING",ico:"🧑",
+   txt:"Something breaks. Not loudly — quietly.\n\nSean holds you. The room is completely still.\n\nYou've been carrying this since you were four years old.",
+   choices:[{t:'[Continue]',pts:100,next:'end'}]},
+  {spk:"WILL HUNTING",ico:"🧑",
+   txt:"You leave a note on Sean's desk before you go.\n\n\"I gotta go see about a girl.\"\n\nYou get in the car. The road opens up. California is a long way west.\n\nFor the first time — you're driving toward something.",
+   choices:[{t:'[Drive west →]',pts:0,next:'win'}]}
+];
+
+function buildSeanOffice(){
+  scene.background=new THREE.Color(0x120c08);
+  scene.fog=new THREE.FogExp2(0x120c08,0.06);
+
+  // Warmer, visible office lighting
+  addLight('ambient',0x5a3820,1.5,0,0,0);
+  addLight('point',0xff9944,2.5,-1.8,2.4,0.5,12);
+  addLight('point',0xffaa66,1.5,2,1.8,2.5,10);
+  addLight('point',0x6688cc,0.6,0,2.4,-4.5,12);
+  const dirFill=new THREE.DirectionalLight(0xffd0a0,1.2);dirFill.position.set(3,8,5);scene.add(dirFill);
+
+  // FLOOR — warm hardwood
+  B(12,0.12,12,M(0x5a3520,0.8),0,-0.06,0);
+  makeGridFloor(12,12,0x7a4a28,0x5a3520);
+
+  // CEILING
+  B(12,0.12,12,M(0x1e1208,0.95),0,4.1,0);
+  // Ceiling moulding
+  B(12,0.15,0.15,M(0x3a2010,0.9),0,3.97,-5.9);
+  B(12,0.15,0.15,M(0x3a2010,0.9),0,3.97,5.9);
+
+  // WALLS
+  B(12,4.2,0.22,M(0x2a1a0c,0.9),0,2.1,-5.9);
+  B(12,4.2,0.22,M(0x2a1a0c,0.9),0,2.1,5.9);
+  B(0.22,4.2,12,M(0x2a1a0c,0.9),-5.9,2.1,0);
+  B(0.22,4.2,12,M(0x2a1a0c,0.9),5.9,2.1,0);
+  // Wainscoting
+  B(12,0.7,0.14,M(0x4a2e14,0.8),0,0.35,-5.83);
+  B(12,0.7,0.14,M(0x4a2e14,0.8),0,0.35,5.83);
+  B(0.14,0.7,12,M(0x4a2e14,0.8),-5.83,0.35,0);
+  B(0.14,0.7,12,M(0x4a2e14,0.8),5.83,0.35,0);
+
+  // DESK — rich mahogany
+  B(2.0,0.1,1.0,M(0x7a3e18,0.75),-0.2,0.84,-2);
+  [[-0.85,-0.35],[0.85,-0.35],[-0.85,0.35],[0.85,0.35]].forEach(([ox,oz])=>
+    B(0.1,0.84,0.1,M(0x5a2e10,0.8),-0.2+ox,0.42,-2+oz));
+  // Desk items
+  B(0.3,0.02,0.22,M(0xeeeedd,0.9),0.4,0.9,-1.8);
+  B(0.22,0.28,0.04,M(0x7a3e18,0.8),0.7,1.0,-1.7);// photo frame
+  const bookColors=[0x8b1a1a,0x1a3a6a,0x1a5a2a,0x6a3a1a,0x4a1a6a];
+  bookColors.forEach((c,i)=>B(0.16,0.24,0.22,M(c,0.85),-0.7+i*0.18,0.97,-1.85));
+
+  // BOOKSHELF
+  B(3.2,3.0,0.38,M(0x4a2e10,0.8),-3.5,1.5,-5.72);
+  for(let sh=0;sh<3;sh++) for(let bk=0;bk<9;bk++){
+    B(0.22,0.3+(bk%3===0?0.06:0),0.22,M(bookColors[bk%5],0.85),-5.0+bk*0.32,0.5+sh*0.92,-5.55);
+  }
+
+  // FLOOR LAMP
+  B(0.08,1.4,0.08,M(0x3a2a1a,0.7),-2,0.7,0.6);
+  const shade=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.32,8,1,true),M(0xcc8844,0.8,0,0xff9944,0.3));
+  shade.position.set(-2,1.5,0.6);scene.add(shade);
+
+  // WINDOW
+  B(1.6,1.4,0.1,M(0x2244aa,0.1,0.8,0x4466cc,0.3),0.5,2.4,-5.82);
+  B(1.7,1.5,0.08,M(0x5a3a14,0.8),0.5,2.4,-5.78);
+  B(0.08,1.5,0.08,M(0x5a3a14,0.8),0.5,2.4,-5.78);// vertical bar
+
+  // COUCH
+  B(2.2,0.42,0.85,M(0x3a2010,0.85),1.8,0.21,1.5);
+  B(2.2,0.65,0.16,M(0x3a2010,0.85),1.8,0.53,1.92);
+  B(0.16,0.65,0.85,M(0x3a2010,0.85),0.7,0.53,1.5);
+  B(0.16,0.65,0.85,M(0x3a2010,0.85),2.9,0.53,1.5);
+  // Throw pillow
+  B(0.5,0.25,0.22,M(0x8a4a2a,0.85),2.2,0.55,1.65);
+
+  // Will's chair
+  B(0.52,0.07,0.52,M(0x2a1a0e,0.9),0,0.5,1.6);
+  B(0.52,0.54,0.07,M(0x2a1a0e,0.9),0,0.77,1.85);
+  [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]].forEach(([ox,oz])=>
+    B(0.06,0.5,0.06,M(0x1a0e08,0.9),ox,0.25,1.6+oz));
+
+  // SEAN NPC
+  buildSean();
+
+  // Rug
+  const rug=new THREE.Mesh(new THREE.CircleGeometry(2.2,16),M(0x5a2a18,0.95));
+  rug.rotation.x=-Math.PI/2;rug.position.set(0,0.07,0);scene.add(rug);
+
+  playerPos.set(0,0,3.8);camYaw=Math.PI;buildPlayer();syncPlayer();
+  document.getElementById('chapter-title').textContent="CH.III — SEAN'S OFFICE";
+  document.getElementById('chap-num').textContent='III';
+  therapyStage=0;inCombat=false;
+  interactables=[{pos:new THREE.Vector3(0,1,-1.5),range:4.5,label:"Press E — talk to Dr. Maguire",action:()=>openTherapy(0)}];
+  document.getElementById('controls').innerHTML='<div class="ctrl"><span>WASD</span> MOVE</div><div class="ctrl"><span>MOUSE</span> LOOK</div><div class="ctrl"><span>E</span> TALK TO SEAN</div>';
+}
+
+function buildSean(){
+  const g=new THREE.Group();
+  // Torso — dark purple jacket
+  B(0.4,0.88,0.28,M(0x3a2050,0.8),0,0.84,0,0,g);
+  // Shirt collar
+  B(0.2,0.12,0.1,M(0xeeeedd,0.8),0,1.15,0.13,0,g);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,10),M(0xc08060,0.7));
+  head.position.set(0,1.4,0);g.add(head);
+  // Beard
+  const beard=new THREE.Mesh(new THREE.SphereGeometry(0.14,8,6),M(0x8a6040,0.9));
+  beard.scale.set(1,0.55,0.7);beard.position.set(0,1.3,0.14);g.add(beard);
+  // Glasses frames
+  [-0.1,0.1].forEach(x=>{
+    const fr=new THREE.Mesh(new THREE.TorusGeometry(0.072,0.012,6,12),M(0x222222,0.6,0.3));
+    fr.position.set(x,1.42,0.21);fr.rotation.x=Math.PI/2;g.add(fr);
+  });
+  const bridge=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.01,0.01),M(0x222,0.5));
+  bridge.position.set(0,1.42,0.21);g.add(bridge);
+  // Arms
+  [-0.3,0.3].forEach((x,i)=>{
+    B(0.12,0.64,0.12,M(0x3a2050,0.8),x,0.72,0,0,g);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),M(0xc08060,0.7));
+    hand.position.set(x+(i===0?-0.04:0.04),0.38,0.05);g.add(hand);
+  });
+  // Legs
+  [-0.1,0.1].forEach(x=>{
+    B(0.14,0.68,0.14,M(0x111122,0.9),x,0.07,0,0,g);
+    B(0.15,0.08,0.26,M(0x111,0.8),x,-0.27,0.04,0,g);
+  });
+  g.position.set(0,0,-1.8);g.rotation.y=Math.PI;
+  scene.add(g);seanMesh=g;
+}
+
+// ===== THERAPY DIALOG =====
+function openTherapy(idx){
+  if(idx>5)return;
+  const d=therapyLines[idx];
+  if(!d)return;
+  openDialog(d.spk,d.ico,d.txt,d.choices?d.choices.map(c=>({
+    text:c.t,
+    action:()=>{
+      addScore(c.pts||0);closeDialog();
+      if(c.next==='break'){
+        showNotif("Something is shifting inside you.",2500);
+        setTimeout(()=>openTherapy(4),2800);
+      } else if(c.next==='end'){
+        setTimeout(()=>openTherapy(5),1800);
+      } else if(c.next==='win'){
+        setTimeout(showEnding,2000);
+      } else {
+        const ni=typeof c.next==='number'?c.next:(idx+1);
+        setTimeout(()=>openTherapy(ni),1600);
+      }
+    }
+  })):[{text:'[Continue]',action:()=>{closeDialog();setTimeout(showEnding,1500);}}]);
+}
+
+// ===== DIALOG ENGINE =====
+function openDialog(speaker,icon,text,choices){
+  dialogOpen=true;
+  document.getElementById('dialog').style.display='block';
+  document.getElementById('dialog-portrait').textContent=icon||'?';
+  document.getElementById('dialog-speaker').textContent=speaker;
+  document.getElementById('dialog-text').textContent=text;
+  const c=document.getElementById('dialog-choices');c.innerHTML='';
+  choices.forEach(ch=>{
+    const b=document.createElement('button');b.className='choice';b.textContent=ch.text;
+    b.onclick=ch.action;c.appendChild(b);
+  });
+}
+function closeDialog(){dialogOpen=false;document.getElementById('dialog').style.display='none';}
+
+// ===== ENDING =====
+function showEnding(){
+  clearScene();
+  scene.background=new THREE.Color(0x0a0c16);
+  addLight('ambient',0x223344,1.2,0,0,0);
+  addLight('point',0xff9933,3.5,0,3,-18,28);
+  addLight('point',0xffaa44,1.5,-4,2,-12,18);
+  addLight('dir',0xffcc88,1.5,5,10,-15);
+  // Road
+  B(5,0.1,50,M(0x151515,1),0,-0.05,-5);
+  makeGridFloor(50,50,0x1a1800,0x111000);
+  for(let z=-20;z<=0;z+=3)B(0.12,0.02,1.2,M(0xffffff,0.9,0,0xddddaa,0.5),0,0.07,z);
+  B(5,0.14,50,M(0x1c1810,0.9),-8,-0.01,-5);
+  B(5,0.14,50,M(0x1c1810,0.9),8,-0.01,-5);
+  // Car silhouette
+  const car=new THREE.Group();
+  B(2.4,0.65,1.2,M(0x1a1a2e,0.85),0,0.33,0,0,car);
+  B(1.5,0.48,1.1,M(0x1a1a2e,0.85),0,0.8,0.1,0,car);
+  B(0.55,0.25,0.12,M(0x3355aa,0.2,0.5,0x4466cc,0.8),-0.9,0.5,-0.56,0,car);
+  B(0.55,0.25,0.12,M(0x3355aa,0.2,0.5,0x4466cc,0.8),0.9,0.5,-0.56,0,car);
+  B(0.4,0.12,0.4,M(0x111,0.9),0.8,-0.01,0.45,0,car);
+  B(0.4,0.12,0.4,M(0x111,0.9),-0.8,-0.01,0.45,0,car);
+  car.position.set(0,0,-3);scene.add(car);
+  camera.position.set(0,3.5,6);camYaw=Math.PI;camPitch=-0.1;
+  playerPos.set(0,0,-3);
+  dialogOpen=true;
+  document.getElementById('chapter-title').textContent='EPILOGUE';
+  document.getElementById('chap-num').textContent='★';
+  document.getElementById('dialog').style.display='block';
+  document.getElementById('dialog-portrait').textContent='🌅';
+  document.getElementById('dialog-speaker').textContent='WILL HUNTING';
+  document.getElementById('dialog-text').textContent=
+'"I gotta go see about a girl."\n\nThe note sits on Sean\'s desk.\nThe car pulls onto the highway.\n3,000 miles west. California.\n\nFor the first time in your life — you\'re not\nrunning away from something. You\'re running toward it.\n\n★  FINAL SCORE: '+score+'  ★';
+  const c=document.getElementById('dialog-choices');c.innerHTML='';
+  const b=document.createElement('button');b.className='choice';b.textContent='[Play again]';
+  b.onclick=()=>{closeDialog();document.getElementById('title-screen').style.display='flex';};
+  c.appendChild(b);
+}
+
+// ===== INPUT =====
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='KeyE'&&!dialogOpen&&!mathOpen)tryInteract();
+  if(e.code==='KeyJ'&&inCombat&&!dialogOpen)doPunch();
+  if(e.code==='KeyK'&&inCombat&&!dialogOpen)doKick();
+  if(e.code==='KeyL'&&inCombat&&!dialogOpen)doBlock();
+  if(e.code==='Escape'){closeDialog();document.getElementById('math-ui').style.display='none';mathOpen=false;}
+});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+const gc=document.getElementById('gameCanvas');
+gc.addEventListener('mousedown',e=>{isDrag=true;lastMX=e.clientX;lastMY=e.clientY;});
+document.addEventListener('mouseup',()=>isDrag=false);
+document.addEventListener('mousemove',e=>{
+  if(!isDrag||dialogOpen||mathOpen)return;
+  camYaw-=(e.clientX-lastMX)*0.003;
+  camPitch=clamp(camPitch-(e.clientY-lastMY)*0.003,-0.65,0.65);
+  lastMX=e.clientX;lastMY=e.clientY;
+});
+gc.addEventListener('touchstart',e=>{isDrag=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;},{passive:true});
+gc.addEventListener('touchmove',e=>{
+  if(!isDrag)return;
+  camYaw-=(e.touches[0].clientX-lastMX)*0.004;
+  camPitch=clamp(camPitch-(e.touches[0].clientY-lastMY)*0.004,-0.65,0.65);
+  lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;
+},{passive:true});
+gc.addEventListener('touchend',()=>isDrag=false);
+
+function tryInteract(){
+  const pp=new THREE.Vector3(playerPos.x,1.7,playerPos.z);
+  for(const ia of interactables){if(pp.distanceTo(ia.pos)<ia.range){ia.action();return;}}
+}
+
+// ===== CHAPTER SYSTEM =====
+function selectChapter(n){
+  selChap=n;
+  document.querySelectorAll('.chap-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+}
+function startGame(){document.getElementById('title-screen').style.display='none';loadChapter(selChap);}
+function loadChapter(n){
+  curChap=n;clearScene();
+  playerHP=100;playerSt=100;score=0;combo=0;updateHP();updateSt();
+  inCombat=false;dialogOpen=false;mathOpen=false;blockTimer=0;wave=0;
+  document.getElementById('dialog').style.display='none';
+  document.getElementById('math-ui').style.display='none';
+  document.getElementById('score-val').textContent='0';
+  document.getElementById('health-wrap').style.display='block';
+  document.getElementById('stamina-wrap').style.display='block';
+  document.getElementById('controls').innerHTML='<div class="ctrl"><span>WASD</span> MOVE</div><div class="ctrl"><span>MOUSE</span> LOOK</div><div class="ctrl"><span>J/K/L</span> PUNCH/KICK/BLOCK</div><div class="ctrl"><span>E</span> INTERACT</div>';
+
+  const card=document.getElementById('chapter-card');
+  const names=['MIT NIGHT SHIFT','SOUTH BOSTON','SEAN\'S OFFICE'];
+  const descs=['Solve Lambeau\'s impossible problems.','Survive two waves. Don\'t go down.','Face your past. It\'s not your fault.'];
+  document.getElementById('chapter-card-num').textContent='CHAPTER '+(n===0?'I':n===1?'II':'III');
+  document.getElementById('chapter-card-name').textContent=names[n];
+  document.getElementById('chapter-card-desc').textContent=descs[n];
+  card.style.opacity='1';
+  setTimeout(()=>card.style.opacity='0',2400);
+
+  if(n===0)buildMIT();
+  else if(n===1)buildSouthBoston();
+  else buildSeanOffice();
+}
+
+// ===== MAIN LOOP =====
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),0.05);
+  T+=dt;
+
+  if(!dialogOpen&&!mathOpen&&curChap>=0){
+    const sp=3.6*dt;
+    const fwd=new THREE.Vector3(-Math.sin(camYaw),0,-Math.cos(camYaw));
+    const rt=new THREE.Vector3(Math.cos(camYaw),0,-Math.sin(camYaw));
+    if(keys['KeyW']||keys['ArrowUp'])playerPos.addScaledVector(fwd,sp);
+    if(keys['KeyS']||keys['ArrowDown'])playerPos.addScaledVector(fwd,-sp);
+    if(keys['KeyA']||keys['ArrowLeft'])playerPos.addScaledVector(rt,-sp);
+    if(keys['KeyD']||keys['ArrowRight'])playerPos.addScaledVector(rt,sp);
+    const lims={0:{x:7.8,z:11},1:{x:5.5,z:11},2:{x:5,z:5}};
+    const lim=lims[curChap]||{x:7,z:9};
+    playerPos.x=clamp(playerPos.x,-lim.x,lim.x);
+    playerPos.z=clamp(playerPos.z,-lim.z,lim.z);
+    syncPlayer();
+
+    staminaTimer+=dt;
+    if(staminaTimer>0.35){playerSt=Math.min(100,playerSt+5);updateSt();staminaTimer=0;}
+    blockTimer=Math.max(0,blockTimer-dt);
+  }
+
+  // Third person camera
+  const cd=4.8,ch=2.4;
+  camera.position.x=lerp(camera.position.x,playerPos.x+Math.sin(camYaw)*cd,0.1);
+  camera.position.z=lerp(camera.position.z,playerPos.z+Math.cos(camYaw)*cd,0.1);
+  camera.position.y=lerp(camera.position.y,playerPos.y+ch,0.1);
+  camera.lookAt(playerPos.x,playerPos.y+1.5,playerPos.z);
+
+  // Enemy update
+  if(inCombat){
+    const pp=new THREE.Vector3(playerPos.x,1,playerPos.z);
+    enemies.forEach(e=>e.update(dt,pp));
+  }
+
+  // Sean idle
+  if(seanMesh){
+    seanMesh.rotation.y=Math.PI+Math.sin(T*0.45)*0.1;
+    seanMesh.position.y=Math.sin(T*1.1)*0.018;
+  }
+  // Lambeau idle + arrow pulse
+  if(lambeauMesh){
+    lambeauMesh.rotation.y=Math.sin(T*0.4)*0.15;
+    lambeauMesh.position.y=Math.sin(T*1.2)*0.02;
+  }
+  if(exitArrow){
+    const pulse=0.5+0.5*Math.sin(T*4);
+    exitArrow.children.forEach(m=>m.material.emissiveIntensity=1.0+pulse*2.5);
+  }
+  if(exitLight) exitLight.intensity=0.8+0.6*Math.sin(T*4);
+
+  // Prompt check
+  if(!dialogOpen&&!mathOpen){
+    const pp=new THREE.Vector3(playerPos.x,1.7,playerPos.z);
+    let found=false;
+    for(const ia of interactables){if(pp.distanceTo(ia.pos)<ia.range){showPrompt(ia.label);found=true;break;}}
+    if(!found){
+      if(inCombat){
+        const ne=getNearEnemy();
+        showPrompt(ne?'J = PUNCH   K = KICK   L = BLOCK':'Move closer to fight');
+      } else showPrompt('');
+    }
+  }
+
+  renderer.render(scene,camera);
+}
+loop();
+</script>
+</body>
+</html>
