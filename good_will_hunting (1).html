@@ -442,6 +442,7 @@ let seanMesh=null,playerMesh=null;
 const clock=new THREE.Clock();
 let T=0;
 let punchAnim=0,punchArm=1,kickAnim=0; // combat animation state
+let isDead=false; // prevents gameOver() from firing multiple times
 
 // ===== UTILS =====
 const rnd=(a,b)=>Math.random()*(b-a)+a;
@@ -609,7 +610,8 @@ class Enemy{
   }
   _die(){
     this.state='dead';addScore(250);
-    this.mesh.rotation.z=Math.PI/2;this.mesh.position.y=0.15;
+    this.mesh.rotation.z=Math.PI/2;
+    // position.y stays at 0.31 (set by update last frame) — body lies flat on ground
     setTimeout(()=>{scene.remove(this.mesh);enemies=enemies.filter(e=>e!==this);onEnemyDied();},1800);
   }
 }
@@ -675,8 +677,26 @@ function doKick(){
 }
 function doBlock(){blockTimer=0.7;showCombo('BLOCKING...');}
 function gameOver(){
-  showNotif('Will hits the ground.\nCops on the way. Try again.',3000);
-  setTimeout(()=>{playerHP=100;updateHP();showNotif('Back on your feet.',1500);},3500);
+  if(isDead)return; // prevent repeat triggers from multiple enemies
+  isDead=true;
+  inCombat=false;
+  punchAnim=0;kickAnim=0;
+  // Freeze all remaining enemies
+  enemies.forEach(e=>{if(e.state!=='dead'){e.state='dead';e.mesh.rotation.z=Math.PI/8;}});
+  document.getElementById('enemy-health-wrap').style.display='none';
+  playFail();
+  flashRed();
+  // Slump the player slightly
+  if(playerMesh)playerMesh.rotation.z=Math.PI/10;
+  setTimeout(()=>{
+    openDialog('WILL HUNTING','💀',
+      '"Will, get UP."\n\nChuckie\'s voice — somewhere behind the ringing.\n\nBoots on wet asphalt. Rain in your face.\nYou went down hard.\n\n★  K.O.  ★',
+      [
+        {text:'[Get up — Try again]',action:()=>{closeDialog();loadChapter(1);}},
+        {text:'[Main menu]',action:()=>{closeDialog();clearScene();curChap=-1;showTitleScreen();}}
+      ]
+    );
+  },900);
 }
 
 // ===== SPAWNWAVE =====
@@ -1306,6 +1326,7 @@ function loadChapter(n){
   curChap=n;clearScene();
   playerHP=100;playerSt=100;score=0;combo=0;updateHP();updateSt();
   inCombat=false;dialogOpen=false;mathOpen=false;blockTimer=0;wave=0;
+  isDead=false;punchAnim=0;kickAnim=0;
   document.getElementById('dialog').style.display='none';
   document.getElementById('math-ui').style.display='none';
   document.getElementById('score-val').textContent='0';
