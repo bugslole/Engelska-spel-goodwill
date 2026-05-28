@@ -1204,6 +1204,12 @@ function buildSeanOffice(){
   [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]].forEach(([ox,oz])=>
     B(0.06,0.5,0.06,M(0x1a0e08,0.9),ox,0.25,1.6+oz));
 
+  // Sean's chair — behind the desk
+  B(0.52,0.07,0.52,M(0x3a2050,0.85),0,0.5,-3.15);
+  B(0.52,0.56,0.07,M(0x3a2050,0.85),0,0.79,-2.88);
+  [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]].forEach(([ox,oz])=>
+    B(0.06,0.5,0.06,M(0x2a1a38,0.9),ox,0.25,-3.15+oz));
+
   // SEAN NPC
   buildSean();
 
@@ -1215,7 +1221,7 @@ function buildSeanOffice(){
   document.getElementById('chapter-title').textContent="CH.III — SEAN'S OFFICE";
   document.getElementById('chap-num').textContent='III';
   therapyStage=0;inCombat=false;
-  interactables=[{pos:new THREE.Vector3(0,1,-1.5),range:4.5,label:"Press E — talk to Dr. Maguire",action:()=>openTherapy(0)}];
+  interactables=[{pos:new THREE.Vector3(0,1,-2.8),range:5.0,label:"Press E — talk to Dr. Maguire",action:()=>openTherapy(0)}];
   document.getElementById('controls').innerHTML='<div class="ctrl"><span>WASD</span> MOVE</div><div class="ctrl"><span>MOUSE</span> LOOK</div><div class="ctrl"><span>E</span> TALK TO SEAN</div>';
 }
 
@@ -1253,7 +1259,7 @@ function buildSean(){
     B(0.14,0.68,0.14,M(0x111122,0.9),x,0.07,0,0,g);
     B(0.15,0.08,0.26,M(0x111,0.8),x,-0.27,0.04,0,g);
   });
-  g.position.set(0,0,-1.8);g.rotation.y=Math.PI;
+  g.position.set(0,0,-2.8);g.rotation.y=Math.PI;
   scene.add(g);seanMesh=g;
 }
 
