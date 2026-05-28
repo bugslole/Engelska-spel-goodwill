@@ -90,6 +90,8 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
 .math-opt.correct{background:rgba(39,174,96,0.18);border-color:#27ae60;color:#2ecc71;}
 .math-opt.wrong{background:rgba(192,57,43,0.18);border-color:#c0392b;color:#e74c3c;}
 #wave-announce{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-family:'Bebas Neue',sans-serif;font-size:42px;color:#e74c3c;letter-spacing:4px;text-shadow:0 0 30px rgba(231,76,60,0.6);opacity:0;transition:opacity 0.5s;pointer-events:none;}
+#ingame-menu-btn{position:absolute;bottom:16px;left:16px;background:transparent;border:none;color:#3a3020;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;padding:5px 0;transition:color 0.2s;pointer-events:all;display:none;}
+#ingame-menu-btn:hover{color:#f0e0b0;}
 
 /* ===== WASTED SCREEN ===== */
 #wasted-screen{position:absolute;top:0;left:0;width:100%;height:100%;z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(2,0,0,0.97);pointer-events:all;}
@@ -130,6 +132,7 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
   <div id="flash"></div>
   <div id="notif"></div>
   <div id="wave-announce"></div>
+  <button id="ingame-menu-btn" onclick="returnToMenu()">ESC &mdash; MAIN MENU</button>
   <div id="chapter-card"><div id="chapter-card-num"></div><div id="chapter-card-name"></div><div id="chapter-card-desc"></div></div>
   <div id="dialog">
     <div id="dialog-inner">
@@ -709,6 +712,16 @@ function doKick(){
   kickAnim=1.0; // trigger leg animation
 }
 function doBlock(){blockTimer=0.7;showCombo('BLOCKING...');}
+function returnToMenu(){
+  if(isDead)return; // wasted screen has its own menu button
+  clearScene();
+  curChap=-1;
+  punchAnim=0;kickAnim=0;isDead=false;
+  dialogOpen=false;mathOpen=false;
+  hideWastedScreen();
+  document.getElementById('ingame-menu-btn').style.display='none';
+  showTitleScreen();
+}
 function showWastedScreen(){
   document.getElementById('wasted-screen').style.display='flex';
 }
@@ -1329,7 +1342,11 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyJ'&&inCombat&&!dialogOpen)doPunch();
   if(e.code==='KeyK'&&inCombat&&!dialogOpen)doKick();
   if(e.code==='KeyL'&&inCombat&&!dialogOpen)doBlock();
-  if(e.code==='Escape'){closeDialog();document.getElementById('math-ui').style.display='none';mathOpen=false;}
+  if(e.code==='Escape'){
+    if(dialogOpen){closeDialog();return;}
+    if(mathOpen){document.getElementById('math-ui').style.display='none';mathOpen=false;return;}
+    if(curChap>=0&&!isDead)returnToMenu();
+  }
 });
 document.addEventListener('keyup',e=>keys[e.code]=false);
 const gc=document.getElementById('gameCanvas');
@@ -1367,6 +1384,7 @@ function loadChapter(n){
   playerHP=100;playerSt=100;score=0;combo=0;updateHP();updateSt();
   inCombat=false;dialogOpen=false;mathOpen=false;blockTimer=0;wave=0;
   isDead=false;punchAnim=0;kickAnim=0;hideWastedScreen();dialogOpen=false;
+  document.getElementById('ingame-menu-btn').style.display='block';
   document.getElementById('dialog').style.display='none';
   document.getElementById('math-ui').style.display='none';
   document.getElementById('score-val').textContent='0';
