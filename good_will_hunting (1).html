@@ -309,6 +309,7 @@ function playHit(){
 // ===== TITLE RAIN ANIMATION =====
 let titleRainCanvas=null,titleRainCtx=null,titleAnimId=null;
 let rainDrops=[],cityLights=[];
+let skylineCache=null; // pre-rendered static skyline — eliminates per-frame flicker
 
 function initTitleScreen(){
   stopTitleAnimation();
@@ -333,21 +334,31 @@ function initTitleScreen(){
     len:Math.random()*18+9,
     alpha:Math.random()*0.22+0.04
   });
+  buildSkylineCache(); // bake static skyline once — no more per-frame window flicker
   animateTitle();
 }
 function stopTitleAnimation(){
   if(titleAnimId){cancelAnimationFrame(titleAnimId);titleAnimId=null;}
 }
+// Renders skyline once to an offscreen canvas — windows are fixed, no per-frame flicker
+function buildSkylineCache(){
+  const w=titleRainCanvas.width,h=titleRainCanvas.height;
+  skylineCache=document.createElement('canvas');
+  skylineCache.width=w;skylineCache.height=h;
+  const ctx=skylineCache.getContext('2d');
+  // Static sky gradient
+  const grad=ctx.createRadialGradient(w*0.5,h*0.3,0,w*0.5,h*0.3,h*0.9);
+  grad.addColorStop(0,'#1c1408');grad.addColorStop(0.5,'#0c0a10');grad.addColorStop(1,'#04040a');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  drawSkyline(ctx,w,h); // called once — windows decided here and never change
+}
 function animateTitle(){
   if(!titleRainCtx)return;
   titleAnimId=requestAnimationFrame(animateTitle);
   const ctx=titleRainCtx,w=titleRainCanvas.width,h=titleRainCanvas.height;
-  // Sky gradient
-  const grad=ctx.createRadialGradient(w*0.5,h*0.3,0,w*0.5,h*0.3,h*0.9);
-  grad.addColorStop(0,'#1c1408');grad.addColorStop(0.5,'#0c0a10');grad.addColorStop(1,'#04040a');
-  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
-  // Skyline
-  drawSkyline(ctx,w,h);
+  // Draw pre-rendered static skyline (no gradient or window flicker per frame)
+  if(skylineCache)ctx.drawImage(skylineCache,0,0);
+  else{ctx.fillStyle='#04040a';ctx.fillRect(0,0,w,h);}
   // City lights
   const nt=Date.now()/1000;
   cityLights.forEach(l=>{
@@ -430,6 +441,7 @@ let blockTimer=0,staminaTimer=0,wave=0;
 let seanMesh=null,playerMesh=null;
 const clock=new THREE.Clock();
 let T=0;
+let punchAnim=0,punchArm=1,kickAnim=0; // combat animation state
 
 // ===== UTILS =====
 const rnd=(a,b)=>Math.random()*(b-a)+a;
@@ -495,22 +507,26 @@ function buildPlayer(){
   // Dark hair
   const hair=new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8,0,Math.PI*2,0,Math.PI*0.42),M(0x1e0e04,0.9));
   hair.position.set(0,1.44,0);g.add(hair);
-  // Arms
-  [-0.28,0.28].forEach((x,i)=>{
-    B(0.12,0.62,0.12,M(0x3a6abf,0.8),x,0.72,0,0,g);
+  // Arms — axeln sitter vid toppen av torson (y=0.83+0.41=1.24), armen hänger därifrån
+  [-0.25,0.25].forEach((x,i)=>{
+    B(0.12,0.62,0.12,M(0x3a6abf,0.8),x,0.93,0,0,g);
     const hand=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6),M(0xd4956b,0.7));
-    hand.position.set(x+(i===0?-0.04:0.04),0.38,0);g.add(hand);
+    hand.position.set(x+(i===0?-0.05:0.05),0.54,0);g.add(hand);
   });
   // Legs
   [-0.1,0.1].forEach(x=>{
     B(0.14,0.68,0.14,M(0x1c2040,0.9),x,0.06,0,0,g);
     B(0.15,0.08,0.24,M(0x111111,0.8),x,-0.27,0.04,0,g);
   });
+  // Ansikte — ögon + mun på framsidan (local +Z)
+  const pEyeM=M(0x111111,0.4);
+  [-0.07,0.07].forEach(ex=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.035,6,5),pEyeM);e.position.set(ex,1.40,0.18);g.add(e);});
+  const pMth=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.024,0.04),M(0x6a2010,0.8));pMth.position.set(0,1.30,0.18);g.add(pMth);
   playerMesh=g;scene.add(g);
 }
 function syncPlayer(){
   if(!playerMesh)return;
-  playerMesh.position.set(playerPos.x,0,playerPos.z);
+  playerMesh.position.set(playerPos.x,0.31,playerPos.z);
   playerMesh.rotation.y=camYaw+Math.PI;
   if(keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']){
     playerMesh.children[0].position.y=0.83+Math.sin(T*12)*0.015;
@@ -539,8 +555,20 @@ class Enemy{
       const hair=new THREE.Mesh(new THREE.SphereGeometry(0.21,10,6,0,Math.PI*2,0,Math.PI*0.4),M(0x1a0a02,0.9));
       hair.position.set(0,1.41,0);g.add(hair);
     }
-    [-0.27,0.27].forEach(x=>B(0.12,0.6,0.12,M(tc,0.8),x,0.72,0,0,g));
+    // Arms — axeln vid torsoöverkant (y=0.84+0.42=1.26), arm hänger därifrån
+    [-0.24,0.24].forEach((x,i)=>{
+      B(0.12,0.60,0.12,M(tc,0.8),x,0.96,0,0,g);
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6),M(hc,0.7));
+      hand.position.set(x+(i===0?-0.05:0.05),0.58,0);g.add(hand);
+    });
     [-0.1,0.1].forEach(x=>B(0.13,0.66,0.13,M(0x111,0.9),x,0.07,0,0,g));
+    // Ansikte — ögon + mun (lookAt gör att de alltid vänder mot spelaren)
+    const eEyeC=this.type==='cop'?0x2244cc:0x111111;
+    const eEyeM=new THREE.MeshStandardMaterial({color:eEyeC});
+    [-0.065,0.065].forEach(ex=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.036,6,5),eEyeM);e.position.set(ex,1.38,0.18);g.add(e);});
+    const eBrow=new THREE.MeshStandardMaterial({color:0x1a0800});
+    [-0.065,0.065].forEach(ex=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.018,0.04),eBrow);b.position.set(ex,1.43,0.17);g.add(b);});
+    const eMth=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.022,0.04),new THREE.MeshStandardMaterial({color:0x5a1a1a}));eMth.position.set(0,1.28,0.18);g.add(eMth);
     // Name label stored for enemy-bar
     this._label=this.type==='cop'?'BOSTON PD':this.type==='gang'?'GANG MEMBER':'THUG';
     return g;
@@ -570,7 +598,7 @@ class Enemy{
       }
     }
     this.mesh.position.copy(this.pos);
-    this.mesh.position.y=Math.sin(T*5)*0.018*(this.state==='chase'?1:0);
+    this.mesh.position.y=0.31+Math.sin(T*5)*0.018*(this.state==='chase'?1:0);
   }
   hit(dmg){
     if(this.state==='dead')return false;
@@ -581,7 +609,7 @@ class Enemy{
   }
   _die(){
     this.state='dead';addScore(250);
-    this.mesh.rotation.z=Math.PI/2;this.mesh.position.y=-0.15;
+    this.mesh.rotation.z=Math.PI/2;this.mesh.position.y=0.15;
     setTimeout(()=>{scene.remove(this.mesh);enemies=enemies.filter(e=>e!==this);onEnemyDied();},1800);
   }
 }
@@ -630,6 +658,7 @@ function doPunch(){
   const labels=['JAB!','RIGHT HOOK!','STRAIGHT!','COMBO x'+combo,'WILL POWER!'];
   showCombo(combo>=4?'COMBO x'+combo:labels[Math.floor(Math.random()*3)]);
   flashGold();
+  punchAnim=1.0;punchArm*=-1; // trigger arm animation
 }
 function doKick(){
   if(playerSt<22){showNotif('Too tired!');return;}
@@ -642,6 +671,7 @@ function doKick(){
   enemyHP=Math.max(0,t.hp/t.maxHp*100);updateEHP();
   if(!dead){activeEnemy=t;document.getElementById('enemy-name').textContent=t._label;}
   addScore(45);showCombo('KICK! '+dmg+'dmg');flashGold();
+  kickAnim=1.0; // trigger leg animation
 }
 function doBlock(){blockTimer=0.7;showCombo('BLOCKING...');}
 function gameOver(){
@@ -803,17 +833,23 @@ function spawnLambeau(){
   // Grey hair
   const hair=new THREE.Mesh(new THREE.SphereGeometry(0.23,10,8,0,Math.PI*2,0,Math.PI*0.42),M(0xaaaaaa,0.85));
   hair.position.set(0,1.50,0);g.add(hair);
-  // Arms
-  [-0.32,0.32].forEach((x,i)=>{
-    B(0.12,0.66,0.12,M(0x4a4a5a,0.8),x,0.74,0,0,g);
+  // Arms — axeln vid torsoöverkant (y=0.86+0.46=1.32), arm hänger därifrån
+  [-0.27,0.27].forEach((x,i)=>{
+    B(0.12,0.66,0.12,M(0x4a4a5a,0.8),x,0.99,0,0,g);
     const hand=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),M(0xd0a070,0.7));
-    hand.position.set(x+(i===0?-0.04:0.04),0.40,0.06);g.add(hand);
+    hand.position.set(x+(i===0?-0.05:0.05),0.57,0.06);g.add(hand);
   });
   // Legs
   [-0.1,0.1].forEach(x=>{
     B(0.14,0.70,0.14,M(0x3a3a4a,0.9),x,0.08,0,0,g);
     B(0.15,0.08,0.26,M(0x222,0.8),x,-0.28,0.04,0,g);
   });
+  // Ansikte Lambeau — blå ögon, lätt leende
+  const lEyeM=new THREE.MeshStandardMaterial({color:0x1a3a88});
+  [-0.07,0.07].forEach(ex=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,5),lEyeM);e.position.set(ex,1.46,0.18);g.add(e);});
+  const lBrowM=new THREE.MeshStandardMaterial({color:0x888888});
+  [-0.07,0.07].forEach(ex=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.018,0.04),lBrowM);b.position.set(ex,1.51,0.17);g.add(b);});
+  const lMth=new THREE.Mesh(new THREE.BoxGeometry(0.11,0.024,0.04),new THREE.MeshStandardMaterial({color:0x8a4a30}));lMth.position.set(0,1.36,0.18);g.add(lMth);
   // Place Lambeau at the far end of the corridor (negative Z = board side)
   g.position.set(0,0,-8);
   g.rotation.y=0; // facing toward player
@@ -956,8 +992,8 @@ function buildSouthBoston(){
       if(Math.random()>0.3){
         const warm=Math.random()>0.3;
         const wc=warm?0xffcc66:0x6688cc;
+        // Emissive window geometry only — no per-window PointLight (was ~80 lights → huge lag)
         B(0.5,0.65,0.06,M(0x0a0806,0.3,0,wc,rnd(0.5,1.2)),s*(8+bw/2)+wx*0.9,wy+0.5,bz+1.92);
-        if(Math.abs(s*(8+bw/2)+wx*0.9)<12)addLight('point',warm?0xffaa44:0x4466aa,0.3,s*(8+bw/2)+wx*0.9,wy+0.9,bz+1.5,4);
       }
     }
   }
@@ -1129,12 +1165,16 @@ function buildSean(){
   });
   const bridge=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.01,0.01),M(0x222,0.5));
   bridge.position.set(0,1.42,0.21);g.add(bridge);
-  // Arms
-  [-0.3,0.3].forEach((x,i)=>{
-    B(0.12,0.64,0.12,M(0x3a2050,0.8),x,0.72,0,0,g);
+  // Arms — axeln vid torsoöverkant (y=0.84+0.44=1.28), arm hänger därifrån
+  [-0.26,0.26].forEach((x,i)=>{
+    B(0.12,0.64,0.12,M(0x3a2050,0.8),x,0.96,0,0,g);
     const hand=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),M(0xc08060,0.7));
-    hand.position.set(x+(i===0?-0.04:0.04),0.38,0.05);g.add(hand);
+    hand.position.set(x+(i===0?-0.05:0.05),0.55,0.05);g.add(hand);
   });
+  // Ögon bakom glasögonen
+  const sEyeM=new THREE.MeshStandardMaterial({color:0x2a1a08});
+  [-0.07,0.07].forEach(ex=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.032,6,5),sEyeM);e.position.set(ex,1.43,0.20);g.add(e);});
+  const sMth=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.022,0.03),new THREE.MeshStandardMaterial({color:0x6a3a28}));sMth.position.set(0,1.33,0.20);g.add(sMth);
   // Legs
   [-0.1,0.1].forEach(x=>{
     B(0.14,0.68,0.14,M(0x111122,0.9),x,0.07,0,0,g);
@@ -1292,6 +1332,8 @@ function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(clock.getDelta(),0.05);
   T+=dt;
+  // Skip 3D render entirely while on title screen — eliminates double-RAF lag
+  if(curChap<0)return;
 
   if(!dialogOpen&&!mathOpen&&curChap>=0){
     const sp=3.6*dt;
@@ -1306,6 +1348,34 @@ function loop(){
     playerPos.x=clamp(playerPos.x,-lim.x,lim.x);
     playerPos.z=clamp(playerPos.z,-lim.z,lim.z);
     syncPlayer();
+
+    // ===== COMBAT ANIMATIONS =====
+    if(playerMesh){
+      // children indices: [0]torso [3]Larm [4]Lhand [5]Rarm [6]Rhand [7]Lleg [9]Rleg
+      const ch=playerMesh.children;
+      if(punchAnim>0){
+        punchAnim=Math.max(0,punchAnim-dt*7);
+        const t=Math.sin(punchAnim*Math.PI); // smooth 0→peak→0
+        const ai=punchArm===1?5:3, hi=punchArm===1?6:4; // active arm/hand
+        const ri=punchArm===1?3:5, rhi=punchArm===1?4:6; // recoil arm/hand
+        if(ch[ai]){ch[ai].position.z=-(t*0.42);ch[hi].position.z=-(t*0.42);}
+        if(ch[ri]){ch[ri].position.z=t*0.12;ch[rhi].position.z=t*0.12;}
+        if(ch[0]) ch[0].rotation.y=-punchArm*t*0.32; // torso twist
+      } else {
+        if(ch[3]){ch[3].position.z=0;ch[4].position.z=0;}
+        if(ch[5]){ch[5].position.z=0;ch[6].position.z=0;}
+        if(ch[0]) ch[0].rotation.y=0;
+      }
+      if(kickAnim>0){
+        kickAnim=Math.max(0,kickAnim-dt*6);
+        const t=Math.sin(kickAnim*Math.PI);
+        if(ch[9]){ch[9].position.z=-(t*0.48);ch[9].rotation.x=t*0.55;}
+        if(ch[10])ch[10].position.z=-(t*0.48); // right shoe follows leg
+      } else {
+        if(ch[9]){ch[9].position.z=0;ch[9].rotation.x=0;}
+        if(ch[10])ch[10].position.z=0;
+      }
+    }
 
     staminaTimer+=dt;
     if(staminaTimer>0.35){playerSt=Math.min(100,playerSt+5);updateSt();staminaTimer=0;}
