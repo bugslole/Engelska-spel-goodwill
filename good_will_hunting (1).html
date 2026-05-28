@@ -90,6 +90,25 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
 .math-opt.correct{background:rgba(39,174,96,0.18);border-color:#27ae60;color:#2ecc71;}
 .math-opt.wrong{background:rgba(192,57,43,0.18);border-color:#c0392b;color:#e74c3c;}
 #wave-announce{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-family:'Bebas Neue',sans-serif;font-size:42px;color:#e74c3c;letter-spacing:4px;text-shadow:0 0 30px rgba(231,76,60,0.6);opacity:0;transition:opacity 0.5s;pointer-events:none;}
+
+/* ===== WASTED SCREEN ===== */
+#wasted-screen{position:absolute;top:0;left:0;width:100%;height:100%;z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(2,0,0,0.97);pointer-events:all;}
+/* scanlines */
+#wasted-screen::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.22) 2px,rgba(0,0,0,0.22) 4px);pointer-events:none;z-index:1;}
+/* vignette */
+#wasted-screen::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,0.85) 100%);pointer-events:none;z-index:1;}
+#wasted-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;}
+@keyframes wastedIn{from{opacity:0;transform:scale(1.22) translateY(-16px);filter:blur(10px);}to{opacity:1;transform:scale(1) translateY(0);filter:blur(0);}}
+@keyframes wastedFadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+#wasted-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(82px,15vw,172px);color:#c0392b;letter-spacing:14px;line-height:1;text-shadow:0 0 55px rgba(192,57,43,0.95),0 0 110px rgba(192,57,43,0.45),0 5px 0 rgba(0,0,0,0.9);animation:wastedIn 0.55s cubic-bezier(0.22,1,0.36,1) both;margin-bottom:6px;}
+#wasted-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(160,60,50,0.75);letter-spacing:7px;text-transform:uppercase;margin-bottom:10px;animation:wastedFadeUp 0.4s 0.45s ease both;}
+#wasted-divider{width:260px;height:1px;background:linear-gradient(90deg,transparent,rgba(192,57,43,0.55),transparent);margin:0 auto 18px;animation:wastedFadeUp 0.3s 0.5s ease both;}
+#wasted-quote{font-family:'Special Elite',serif;font-size:13px;color:rgba(190,130,110,0.8);letter-spacing:0.5px;font-style:italic;margin-bottom:42px;max-width:370px;line-height:1.8;animation:wastedFadeUp 0.4s 0.65s ease both;}
+#wasted-buttons{display:flex;flex-direction:column;gap:11px;width:100%;max-width:310px;animation:wastedFadeUp 0.4s 0.88s ease both;}
+.wasted-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(192,57,43,0.38);color:#f0d0c0;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:6px;padding:14px 32px;cursor:pointer;transition:background 0.18s,border-color 0.18s,color 0.18s,box-shadow 0.18s;min-height:52px;}
+.wasted-btn:hover,.wasted-btn:focus-visible{background:rgba(192,57,43,0.2);border-color:rgba(220,60,40,0.8);color:#fff;box-shadow:0 0 26px rgba(192,57,43,0.3);outline:none;}
+.wasted-btn.sec{border-color:rgba(255,255,255,0.1);color:rgba(160,130,110,0.75);font-size:14px;letter-spacing:4px;}
+.wasted-btn.sec:hover,.wasted-btn.sec:focus-visible{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.22);color:#ccc;box-shadow:none;}
 </style>
 </head>
 <body>
@@ -126,6 +145,20 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
     <div id="math-title">PROFESSOR LAMBEAU'S PROBLEM</div>
     <div id="math-problem"></div>
     <div id="math-options"></div>
+  </div>
+</div>
+
+<!-- WASTED DEATH SCREEN -->
+<div id="wasted-screen">
+  <div id="wasted-content">
+    <div id="wasted-title">WASTED</div>
+    <div id="wasted-sub">South Boston &nbsp;·&nbsp; Chapter II</div>
+    <div id="wasted-divider"></div>
+    <div id="wasted-quote">"You wasted all that time trying to be someone you're not."</div>
+    <div id="wasted-buttons">
+      <button class="wasted-btn" onclick="wastedRetry()">PLAY AGAIN</button>
+      <button class="wasted-btn sec" onclick="wastedMenu()">MAIN MENU</button>
+    </div>
   </div>
 </div>
 
@@ -676,27 +709,34 @@ function doKick(){
   kickAnim=1.0; // trigger leg animation
 }
 function doBlock(){blockTimer=0.7;showCombo('BLOCKING...');}
+function showWastedScreen(){
+  document.getElementById('wasted-screen').style.display='flex';
+}
+function hideWastedScreen(){
+  document.getElementById('wasted-screen').style.display='none';
+}
+function wastedRetry(){
+  hideWastedScreen();
+  loadChapter(1);
+}
+function wastedMenu(){
+  hideWastedScreen();
+  clearScene();
+  curChap=-1;
+  showTitleScreen();
+}
 function gameOver(){
-  if(isDead)return; // prevent repeat triggers from multiple enemies
+  if(isDead)return;
   isDead=true;
   inCombat=false;
   punchAnim=0;kickAnim=0;
-  // Freeze all remaining enemies
+  dialogOpen=true; // block WASD/combat input while screen is visible
   enemies.forEach(e=>{if(e.state!=='dead'){e.state='dead';e.mesh.rotation.z=Math.PI/8;}});
   document.getElementById('enemy-health-wrap').style.display='none';
+  if(playerMesh)playerMesh.rotation.z=Math.PI/10;
   playFail();
   flashRed();
-  // Slump the player slightly
-  if(playerMesh)playerMesh.rotation.z=Math.PI/10;
-  setTimeout(()=>{
-    openDialog('WILL HUNTING','💀',
-      '"Will, get UP."\n\nChuckie\'s voice — somewhere behind the ringing.\n\nBoots on wet asphalt. Rain in your face.\nYou went down hard.\n\n★  K.O.  ★',
-      [
-        {text:'[Get up — Try again]',action:()=>{closeDialog();loadChapter(1);}},
-        {text:'[Main menu]',action:()=>{closeDialog();clearScene();curChap=-1;showTitleScreen();}}
-      ]
-    );
-  },900);
+  setTimeout(showWastedScreen,650); // brief pause so red flash lands first
 }
 
 // ===== SPAWNWAVE =====
@@ -1326,7 +1366,7 @@ function loadChapter(n){
   curChap=n;clearScene();
   playerHP=100;playerSt=100;score=0;combo=0;updateHP();updateSt();
   inCombat=false;dialogOpen=false;mathOpen=false;blockTimer=0;wave=0;
-  isDead=false;punchAnim=0;kickAnim=0;
+  isDead=false;punchAnim=0;kickAnim=0;hideWastedScreen();dialogOpen=false;
   document.getElementById('dialog').style.display='none';
   document.getElementById('math-ui').style.display='none';
   document.getElementById('score-val').textContent='0';
