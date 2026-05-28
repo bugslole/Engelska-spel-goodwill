@@ -1434,31 +1434,83 @@ function loop(){
     playerPos.z=clamp(playerPos.z,-lim.z,lim.z);
     syncPlayer();
 
-    // ===== COMBAT ANIMATIONS =====
-    if(playerMesh){
-      // children indices: [0]torso [3]Larm [4]Lhand [5]Rarm [6]Rhand [7]Lleg [9]Rleg
+    // ===== CHARACTER ANIMATIONS (pivot-based) =====
+    if(playerMesh&&playerMesh.children.length>10){
       const ch=playerMesh.children;
+      // [0]torso [1]head [3]Larm [4]Lhand [5]Rarm [6]Rhand [7]Lleg [8]Lshoe [9]Rleg [10]Rshoe
+      const TORSO=ch[0],HEAD=ch[1];
+      const LARM=ch[3],LHAND=ch[4],RARM=ch[5],RHAND=ch[6];
+      const LLEG=ch[7],LSHOE=ch[8],RLEG=ch[9],RSHOE=ch[10];
+
+      // sa: position arm from SHOULDER pivot (y=1.24) at angle θ (rotation around X)
+      // arm length=0.62, hand distance from shoulder=0.70 (arm+hand radius)
+      // hx = lateral hand offset
+      const sa=(arm,hand,ax,θ,hx)=>{
+        const c=Math.cos(θ),s=Math.sin(θ);
+        arm.position.set(ax,1.24-0.31*c,-0.31*s);arm.rotation.x=θ;
+        hand.position.set(ax+hx,1.24-0.70*c,-0.70*s);
+      };
+      // sl: position leg from HIP pivot (y=0.40) at angle θ
+      const sl=(leg,shoe,lx,θ)=>{
+        const c=Math.cos(θ),s=Math.sin(θ);
+        leg.position.set(lx,0.40-0.34*c,-0.34*s);leg.rotation.x=θ;
+        shoe.position.set(lx,0.40-0.68*c+0.01,-0.68*s+0.04);shoe.rotation.x=θ;
+      };
+
       if(punchAnim>0){
+        // Punch: active arm swings ~86° forward from shoulder, guard arm lifts slightly
         punchAnim=Math.max(0,punchAnim-dt*7);
-        const t=Math.sin(punchAnim*Math.PI); // smooth 0→peak→0
-        const ai=punchArm===1?5:3, hi=punchArm===1?6:4; // active arm/hand
-        const ri=punchArm===1?3:5, rhi=punchArm===1?4:6; // recoil arm/hand
-        if(ch[ai]){ch[ai].position.z=-(t*0.42);ch[hi].position.z=-(t*0.42);}
-        if(ch[ri]){ch[ri].position.z=t*0.12;ch[rhi].position.z=t*0.12;}
-        if(ch[0]) ch[0].rotation.y=-punchArm*t*0.32; // torso twist
-      } else {
-        if(ch[3]){ch[3].position.z=0;ch[4].position.z=0;}
-        if(ch[5]){ch[5].position.z=0;ch[6].position.z=0;}
-        if(ch[0]) ch[0].rotation.y=0;
-      }
-      if(kickAnim>0){
-        kickAnim=Math.max(0,kickAnim-dt*6);
+        const t=Math.sin(punchAnim*Math.PI);       // 0→1→0 arc
+        const swing=t*Math.PI*0.48;               // punch arm rotation (~86°)
+        const guard=t*Math.PI*0.17;               // guard arm lifts slightly
+        if(punchArm===1){                          // right arm punches
+          sa(RARM,RHAND,0.25,swing,0.05);
+          sa(LARM,LHAND,-0.25,guard,-0.05);
+        }else{                                     // left arm punches
+          sa(LARM,LHAND,-0.25,swing,-0.05);
+          sa(RARM,RHAND,0.25,guard,0.05);
+        }
+        sl(LLEG,LSHOE,-0.1,0);sl(RLEG,RSHOE,0.1,0);
+        TORSO.rotation.y=-punchArm*t*0.38;         // torso twists into punch
+        TORSO.rotation.x=0;
+        HEAD.rotation.y=-punchArm*t*0.18;
+
+      }else if(kickAnim>0){
+        // Kick: right leg swings ~79° up/forward, arms spread for balance
+        kickAnim=Math.max(0,kickAnim-dt*5.5);
         const t=Math.sin(kickAnim*Math.PI);
-        if(ch[9]){ch[9].position.z=-(t*0.48);ch[9].rotation.x=t*0.55;}
-        if(ch[10])ch[10].position.z=-(t*0.48); // right shoe follows leg
-      } else {
-        if(ch[9]){ch[9].position.z=0;ch[9].rotation.x=0;}
-        if(ch[10])ch[10].position.z=0;
+        sl(RLEG,RSHOE,0.1,t*Math.PI*0.44);        // kicking leg
+        sl(LLEG,LSHOE,-0.1,-t*0.08);               // plant leg leans back
+        sa(LARM,LHAND,-0.25,t*Math.PI*0.22,-0.05); // arms spread for balance
+        sa(RARM,RHAND,0.25,t*Math.PI*0.12,0.05);
+        TORSO.rotation.y=0;TORSO.rotation.x=t*0.12;// lean forward slightly
+        HEAD.rotation.y=0;
+
+      }else if(blockTimer>0.05){
+        // Block: both arms rise to high guard position (~68° up)
+        sa(LARM,LHAND,-0.25,Math.PI*0.38,-0.05);
+        sa(RARM,RHAND,0.25,Math.PI*0.38,0.05);
+        sl(LLEG,LSHOE,-0.1,0);sl(RLEG,RSHOE,0.1,0);
+        TORSO.rotation.y=0;TORSO.rotation.x=0;HEAD.rotation.y=0;
+
+      }else{
+        const walking=keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD'];
+        if(walking){
+          // Walk cycle: arms and legs swing in opposite phase
+          const wt=T*7;
+          sa(RARM,RHAND,0.25,Math.sin(wt)*0.28,0.05);
+          sa(LARM,LHAND,-0.25,-Math.sin(wt)*0.28,-0.05);
+          sl(RLEG,RSHOE,0.1,Math.sin(wt)*0.32);
+          sl(LLEG,LSHOE,-0.1,-Math.sin(wt)*0.32);
+          TORSO.rotation.y=Math.sin(wt)*0.04;
+          TORSO.rotation.x=0;HEAD.rotation.y=0;
+        }else{
+          // Idle: reset all to neutral hanging position
+          sa(LARM,LHAND,-0.25,0,-0.05);
+          sa(RARM,RHAND,0.25,0,0.05);
+          sl(LLEG,LSHOE,-0.1,0);sl(RLEG,RSHOE,0.1,0);
+          TORSO.rotation.y=0;TORSO.rotation.x=0;HEAD.rotation.y=0;
+        }
       }
     }
 
