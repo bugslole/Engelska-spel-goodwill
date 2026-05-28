@@ -45,14 +45,38 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
 #prompt{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);border:1px solid rgba(240,224,176,0.25);border-radius:4px;padding:7px 18px;font-size:11px;color:#f0e0b0;letter-spacing:1px;display:none;white-space:nowrap;}
 #flash{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;background:rgba(192,57,43,0.35);}
 #notif{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);border:1px solid rgba(240,224,176,0.2);border-radius:4px;padding:9px 22px;font-family:'Special Elite',serif;font-size:13px;color:#f0e0b0;opacity:0;transition:opacity 0.4s;text-align:center;pointer-events:none;max-width:440px;line-height:1.5;white-space:pre-wrap;}
-#title-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 50% 40%,#1a1408 0%,#060608 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
-#title-screen h1{font-family:'Bebas Neue',sans-serif;font-size:80px;color:#f0e0b0;letter-spacing:10px;text-shadow:0 0 60px rgba(240,224,176,0.4),0 0 120px rgba(240,224,176,0.15);}
-#title-screen h2{font-family:'Special Elite',serif;font-size:15px;color:#6a5a3a;letter-spacing:5px;margin-top:6px;margin-bottom:40px;}
+/* ===== TITLE SCREEN ===== */
+#title-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;overflow:hidden;}
+#title-rain{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+#title-vignette{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 45%,transparent 25%,rgba(0,0,4,0.82) 100%);}
+#title-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px;animation:titleFadeIn 1.4s ease-out both;}
+@keyframes titleFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+#title-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#4a3a1e;letter-spacing:6px;margin-bottom:12px;text-transform:uppercase;}
+#title-main{font-family:'Bebas Neue',sans-serif;font-size:clamp(66px,9vw,110px);color:#f0e0b0;letter-spacing:8px;line-height:0.88;text-shadow:0 0 80px rgba(240,200,100,0.18),0 0 160px rgba(240,180,80,0.07);margin-bottom:8px;}
+#title-line-sep{width:190px;height:1px;background:linear-gradient(90deg,transparent,rgba(240,224,176,0.32),transparent);margin:8px auto;}
+#title-sub{font-family:'Special Elite',serif;font-size:10px;color:#6a5a34;letter-spacing:7px;margin-bottom:8px;text-transform:uppercase;}
+#title-quote{font-family:'Special Elite',serif;font-size:11px;color:#46381e;letter-spacing:0.5px;line-height:1.85;margin-bottom:22px;font-style:italic;max-width:400px;}
+#title-divider{display:flex;align-items:center;gap:14px;width:390px;margin-bottom:10px;}
+#title-divider span:not(.tdtxt){flex:1;height:1px;background:rgba(240,224,176,0.09);}
+.tdtxt{font-family:'IBM Plex Mono',monospace;font-size:7px;color:#362c12;letter-spacing:4px;}
+#chapter-select{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;}
+.chap-btn{background:rgba(0,0,0,0.4);border:1px solid rgba(240,224,176,0.1);color:#666;font-family:'IBM Plex Mono',monospace;cursor:pointer;transition:all 0.22s;padding:11px 15px;text-align:left;min-width:145px;display:flex;flex-direction:column;gap:3px;}
+.chap-btn .chap-num{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#362c12;letter-spacing:2px;transition:color 0.22s;line-height:1;}
+.chap-btn .chap-name{font-size:9px;color:#5a5040;letter-spacing:2px;transition:color 0.22s;text-transform:uppercase;}
+.chap-btn .chap-desc{font-size:8px;color:#2c2210;letter-spacing:0.5px;transition:color 0.22s;font-style:italic;margin-top:2px;}
+.chap-btn:hover,.chap-btn.active{border-color:rgba(240,200,100,0.32);background:rgba(240,200,60,0.05);}
+.chap-btn.active{border-color:rgba(240,200,100,0.42);background:rgba(240,200,60,0.07);}
+.chap-btn:hover .chap-num,.chap-btn.active .chap-num{color:#c09830;}
+.chap-btn:hover .chap-name,.chap-btn.active .chap-name{color:#a88828;}
+.chap-btn:hover .chap-desc,.chap-btn.active .chap-desc{color:#706028;}
+#start-btn{background:rgba(240,224,176,0.06);border:1px solid rgba(240,224,176,0.28);color:#f0e0b0;font-family:'Bebas Neue',sans-serif;font-size:21px;padding:11px 60px;cursor:pointer;letter-spacing:6px;transition:all 0.3s;margin-bottom:12px;position:relative;overflow:hidden;}
+#start-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(240,224,176,0.07) 50%,transparent 100%);transform:translateX(-100%);transition:transform 0.55s;}
+#start-btn:hover::before{transform:translateX(100%);}
+#start-btn:hover{background:rgba(240,224,176,0.12);box-shadow:0 0 50px rgba(240,180,60,0.11),0 0 100px rgba(240,180,60,0.04);border-color:rgba(240,224,176,0.48);}
+#title-controls{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#242012;letter-spacing:2px;margin-bottom:7px;}
+#sound-toggle{background:transparent;border:1px solid rgba(240,224,176,0.07);color:#3a3020;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;cursor:pointer;padding:4px 12px;transition:all 0.2s;border-radius:2px;}
+#sound-toggle:hover{color:#8a7840;border-color:rgba(240,224,176,0.18);}
 .line{width:100px;height:1px;background:rgba(240,224,176,0.15);margin:14px auto;}
-.chap-btn{background:transparent;border:1px solid rgba(240,224,176,0.18);color:#999;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:10px 26px;cursor:pointer;letter-spacing:2px;transition:all 0.2s;margin:4px;}
-.chap-btn:hover,.chap-btn.active{border-color:rgba(240,224,176,0.5);color:#f0e0b0;background:rgba(240,224,176,0.05);}
-#start-btn{background:rgba(240,224,176,0.1);border:1px solid rgba(240,224,176,0.4);color:#f0e0b0;font-family:'Bebas Neue',sans-serif;font-size:24px;padding:13px 52px;cursor:pointer;letter-spacing:5px;transition:all 0.25s;margin-top:28px;}
-#start-btn:hover{background:rgba(240,224,176,0.2);box-shadow:0 0 40px rgba(240,224,176,0.2);}
 #chapter-card{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;pointer-events:none;transition:opacity 0.7s;}
 #chapter-card-num{font-family:'Bebas Neue',sans-serif;font-size:13px;color:#7a6a4a;letter-spacing:7px;}
 #chapter-card-name{font-family:'Bebas Neue',sans-serif;font-size:56px;color:#f0e0b0;letter-spacing:5px;text-shadow:0 0 50px rgba(240,224,176,0.4);}
@@ -106,20 +130,274 @@ body{background:#0a0a0e;overflow:hidden;font-family:'IBM Plex Mono',monospace;}
 </div>
 
 <div id="title-screen">
-  <h1>GOOD WILL HUNTING</h1>
-  <h2>THE GAME — 1997</h2>
-  <div class="line"></div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:4px;">
-    <button class="chap-btn active" onclick="selectChapter(0)">CH.I — MIT NIGHT SHIFT</button>
-    <button class="chap-btn" onclick="selectChapter(1)">CH.II — SOUTH BOSTON</button>
-    <button class="chap-btn" onclick="selectChapter(2)">CH.III — SEAN'S OFFICE</button>
+  <canvas id="title-rain"></canvas>
+  <div id="title-vignette"></div>
+  <div id="title-content">
+    <div id="title-eyebrow">Miramax Films &nbsp;·&nbsp; Boston, MA &nbsp;·&nbsp; 1997</div>
+    <h1 id="title-main">GOOD WILL<br>HUNTING</h1>
+    <div id="title-line-sep"></div>
+    <div id="title-sub">The Interactive Experience</div>
+    <div id="title-quote">"You wasted all that time trying to be someone you're not."</div>
+    <div id="title-divider"><span></span><span class="tdtxt">SELECT CHAPTER</span><span></span></div>
+    <div id="chapter-select">
+      <button class="chap-btn active" onclick="selectChapter(0);playClick()">
+        <span class="chap-num">I</span>
+        <span class="chap-name">MIT Night Shift</span>
+        <span class="chap-desc">Solve the impossible problem</span>
+      </button>
+      <button class="chap-btn" onclick="selectChapter(1);playClick()">
+        <span class="chap-num">II</span>
+        <span class="chap-name">South Boston</span>
+        <span class="chap-desc">Don't let them see you scared</span>
+      </button>
+      <button class="chap-btn" onclick="selectChapter(2);playClick()">
+        <span class="chap-num">III</span>
+        <span class="chap-name">Sean's Office</span>
+        <span class="chap-desc">It's not your fault</span>
+      </button>
+    </div>
+    <button id="start-btn" onclick="startGame();playClick()">BEGIN</button>
+    <div id="title-controls">WASD Move &nbsp;·&nbsp; Mouse Look &nbsp;·&nbsp; J Punch &nbsp;·&nbsp; K Kick &nbsp;·&nbsp; L Block &nbsp;·&nbsp; E Interact</div>
+    <button id="sound-toggle" onclick="toggleAudio()">♪ SOUND OFF</button>
   </div>
-  <button id="start-btn" onclick="startGame()">BEGIN</button>
-  <div style="margin-top:20px;font-size:10px;color:#3a3020;letter-spacing:2px;">WASD MOVE • MOUSE LOOK • J PUNCH • K KICK • L BLOCK • E INTERACT</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+// ===== AUDIO ENGINE =====
+let audioCtx=null,masterGain=null,audioEnabled=false;
+let ambientNodes=[],ambientRunning=false;
+let themeIdx=0;
+const themeNotes=[
+  {f:220,d:2.0,v:0.06},{f:261.63,d:1.4,v:0.05},{f:246.94,d:2.0,v:0.055},
+  {f:220,d:1.4,v:0.05},{f:196,d:2.8,v:0.065},{f:164.81,d:1.8,v:0.045},
+  {f:174.61,d:1.4,v:0.04},{f:196,d:2.2,v:0.055},{f:220,d:1.8,v:0.06},
+  {f:233.08,d:2.4,v:0.05},{f:220,d:1.6,v:0.045},{f:196,d:3.0,v:0.07},
+];
+
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=audioCtx.createGain();masterGain.gain.value=0.75;
+  masterGain.connect(audioCtx.destination);
+}
+function toggleAudio(){
+  audioEnabled=!audioEnabled;
+  const btn=document.getElementById('sound-toggle');
+  if(audioEnabled){
+    initAudio();
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    startTitleAmbient();
+    btn.textContent='♪ SOUND ON';btn.style.color='#c8a840';
+  } else {
+    stopTitleAmbient();
+    btn.textContent='♪ SOUND OFF';btn.style.color='#3a3020';
+  }
+}
+function startTitleAmbient(){
+  if(!audioCtx||ambientRunning)return;
+  ambientRunning=true;
+  // Rain noise
+  const sz=audioCtx.sampleRate*4;
+  const nb=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);
+  const nd=nb.getChannelData(0);
+  for(let i=0;i<sz;i++)nd[i]=Math.random()*2-1;
+  const rSrc=audioCtx.createBufferSource();rSrc.buffer=nb;rSrc.loop=true;
+  const rFlt=audioCtx.createBiquadFilter();rFlt.type='bandpass';rFlt.frequency.value=1600;rFlt.Q.value=0.25;
+  const rFlt2=audioCtx.createBiquadFilter();rFlt2.type='highpass';rFlt2.frequency.value=800;
+  const rGain=audioCtx.createGain();rGain.gain.value=0.045;
+  rSrc.connect(rFlt);rFlt.connect(rFlt2);rFlt2.connect(rGain);rGain.connect(masterGain);
+  rSrc.start();ambientNodes.push(rSrc);
+  // Low sub-drone
+  const drone=audioCtx.createOscillator();drone.type='sine';drone.frequency.value=54.5;
+  const dGain=audioCtx.createGain();dGain.gain.value=0.025;
+  const dFlt=audioCtx.createBiquadFilter();dFlt.type='lowpass';dFlt.frequency.value=160;
+  drone.connect(dFlt);dFlt.connect(dGain);dGain.connect(masterGain);
+  drone.start();ambientNodes.push(drone);
+  // Second harmonic
+  const drone2=audioCtx.createOscillator();drone2.type='sine';drone2.frequency.value=109;
+  const d2G=audioCtx.createGain();d2G.gain.value=0.012;
+  drone2.connect(d2G);d2G.connect(masterGain);
+  drone2.start();ambientNodes.push(drone2);
+  // Start melodic theme
+  scheduleMelody();
+}
+function stopTitleAmbient(){
+  ambientRunning=false;
+  ambientNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  ambientNodes=[];
+}
+function scheduleMelody(){
+  if(!ambientRunning||!audioCtx)return;
+  const note=themeNotes[themeIdx%themeNotes.length];themeIdx++;
+  const osc=audioCtx.createOscillator();osc.type='triangle';osc.frequency.value=note.f;
+  const env=audioCtx.createGain();
+  env.gain.setValueAtTime(0,audioCtx.currentTime);
+  env.gain.linearRampToValueAtTime(note.v,audioCtx.currentTime+0.35);
+  env.gain.setValueAtTime(note.v,audioCtx.currentTime+note.d-0.55);
+  env.gain.linearRampToValueAtTime(0,audioCtx.currentTime+note.d);
+  const dly=audioCtx.createDelay(1.2);dly.delayTime.value=0.32;
+  const dlyG=audioCtx.createGain();dlyG.gain.value=0.22;
+  const dlyFlt=audioCtx.createBiquadFilter();dlyFlt.type='lowpass';dlyFlt.frequency.value=1200;
+  osc.connect(env);env.connect(masterGain);
+  env.connect(dly);dly.connect(dlyFlt);dlyFlt.connect(dlyG);dlyG.connect(masterGain);
+  osc.start();osc.stop(audioCtx.currentTime+note.d+0.1);
+  const gap=note.d*1000+Math.random()*700+200;
+  setTimeout(()=>{if(ambientRunning)scheduleMelody();},gap);
+}
+
+// Gameplay sounds
+function playClick(){
+  if(!audioEnabled||!audioCtx)return;
+  const o=audioCtx.createOscillator();o.type='sine';o.frequency.value=780;
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.12,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.09);
+  o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.09);
+}
+function playPunch(){
+  if(!audioEnabled||!audioCtx)return;
+  const sz=Math.floor(audioCtx.sampleRate*0.18);
+  const buf=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<sz;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(sz*0.12));
+  const src=audioCtx.createBufferSource();src.buffer=buf;
+  const flt=audioCtx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=320;
+  const g=audioCtx.createGain();g.gain.value=0.55;
+  src.connect(flt);flt.connect(g);g.connect(masterGain);src.start();
+}
+function playKick(){
+  if(!audioEnabled||!audioCtx)return;
+  const sz=Math.floor(audioCtx.sampleRate*0.22);
+  const buf=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<sz;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(sz*0.09));
+  const src=audioCtx.createBufferSource();src.buffer=buf;
+  const flt=audioCtx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=240;
+  const g=audioCtx.createGain();g.gain.value=0.72;
+  src.connect(flt);flt.connect(g);g.connect(masterGain);src.start();
+}
+function playSuccess(){
+  if(!audioEnabled||!audioCtx)return;
+  [523.25,659.25,783.99].forEach((f,i)=>{
+    const o=audioCtx.createOscillator();o.type='triangle';o.frequency.value=f;
+    const g=audioCtx.createGain();
+    g.gain.setValueAtTime(0,audioCtx.currentTime+i*0.13);
+    g.gain.linearRampToValueAtTime(0.11,audioCtx.currentTime+i*0.13+0.06);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.13+0.45);
+    o.connect(g);g.connect(masterGain);
+    o.start(audioCtx.currentTime+i*0.13);o.stop(audioCtx.currentTime+i*0.13+0.5);
+  });
+}
+function playFail(){
+  if(!audioEnabled||!audioCtx)return;
+  const o=audioCtx.createOscillator();o.type='sawtooth';o.frequency.value=200;
+  o.frequency.linearRampToValueAtTime(75,audioCtx.currentTime+0.32);
+  const g=audioCtx.createGain();g.gain.setValueAtTime(0.11,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.38);
+  o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.4);
+}
+function playHit(){
+  if(!audioEnabled||!audioCtx)return;
+  const o=audioCtx.createOscillator();o.type='square';o.frequency.value=160;
+  o.frequency.linearRampToValueAtTime(60,audioCtx.currentTime+0.1);
+  const g=audioCtx.createGain();g.gain.setValueAtTime(0.18,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.14);
+  o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.15);
+}
+
+// ===== TITLE RAIN ANIMATION =====
+let titleRainCanvas=null,titleRainCtx=null,titleAnimId=null;
+let rainDrops=[],cityLights=[];
+
+function initTitleScreen(){
+  stopTitleAnimation();
+  titleRainCanvas=document.getElementById('title-rain');
+  if(!titleRainCanvas)return;
+  titleRainCanvas.width=window.innerWidth;
+  titleRainCanvas.height=window.innerHeight;
+  titleRainCtx=titleRainCanvas.getContext('2d');
+  rainDrops=[];cityLights=[];
+  for(let i=0;i<38;i++) cityLights.push({
+    x:Math.random()*window.innerWidth,
+    y:window.innerHeight*(0.4+Math.random()*0.45),
+    r:Math.random()*18+4,
+    warm:Math.random()>0.45,
+    alpha:Math.random()*0.18+0.04,
+    pulse:Math.random()*Math.PI*2
+  });
+  for(let i=0;i<160;i++) rainDrops.push({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    speed:Math.random()*7+5,
+    len:Math.random()*18+9,
+    alpha:Math.random()*0.22+0.04
+  });
+  animateTitle();
+}
+function stopTitleAnimation(){
+  if(titleAnimId){cancelAnimationFrame(titleAnimId);titleAnimId=null;}
+}
+function animateTitle(){
+  if(!titleRainCtx)return;
+  titleAnimId=requestAnimationFrame(animateTitle);
+  const ctx=titleRainCtx,w=titleRainCanvas.width,h=titleRainCanvas.height;
+  // Sky gradient
+  const grad=ctx.createRadialGradient(w*0.5,h*0.3,0,w*0.5,h*0.3,h*0.9);
+  grad.addColorStop(0,'#1c1408');grad.addColorStop(0.5,'#0c0a10');grad.addColorStop(1,'#04040a');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  // Skyline
+  drawSkyline(ctx,w,h);
+  // City lights
+  const nt=Date.now()/1000;
+  cityLights.forEach(l=>{
+    const a=l.alpha+Math.sin(nt*0.6+l.pulse)*0.018;
+    const g2=ctx.createRadialGradient(l.x,l.y,0,l.x,l.y,l.r);
+    const col=l.warm?`rgba(220,130,30,`:`rgba(80,110,220,`;
+    g2.addColorStop(0,col+a+')');g2.addColorStop(1,col+'0)');
+    ctx.fillStyle=g2;ctx.beginPath();ctx.arc(l.x,l.y,l.r,0,Math.PI*2);ctx.fill();
+  });
+  // Rain streaks
+  ctx.lineWidth=0.7;
+  rainDrops.forEach(d=>{
+    ctx.globalAlpha=d.alpha;ctx.strokeStyle='rgba(160,190,230,1)';
+    ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(d.x-0.8,d.y+d.len);ctx.stroke();
+    d.y+=d.speed;d.x-=0.4;
+    if(d.y>h){d.y=-d.len;d.x=Math.random()*w;}
+  });
+  ctx.globalAlpha=1;
+  // Puddle shimmer at ground level
+  const groundY=h*0.74;
+  const shimmer=ctx.createLinearGradient(0,groundY,0,groundY+50);
+  shimmer.addColorStop(0,'rgba(100,80,40,0.18)');shimmer.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=shimmer;ctx.fillRect(0,groundY,w,50);
+}
+function drawSkyline(ctx,w,h){
+  const gy=h*0.74;
+  ctx.fillStyle='rgba(6,6,12,0.92)';ctx.beginPath();ctx.moveTo(0,gy);
+  const raw=[
+    [0,80,0.13],[85,55,0.19],[145,38,0.09],[188,48,0.23],[240,32,0.11],
+    [276,66,0.16],[346,42,0.29],[392,28,0.13],[424,52,0.21],[480,38,0.10],
+    [522,62,0.17],[588,46,0.25],[638,33,0.12],[675,76,0.15],[755,42,0.20],
+    [801,58,0.27],[863,37,0.11],[904,52,0.18],[960,68,0.14],[1032,42,0.21],
+    [1078,75,0.10],[1158,60,0.16]
+  ];
+  raw.forEach(([rx,rw,rh])=>{
+    const bx=(rx/1280)*w,bw=(rw/1280)*w,bh=rh*h;
+    ctx.rect(bx,gy-bh,bw,bh);
+    // Add a few lit windows
+    for(let wy=gy-bh+8;wy<gy-8;wy+=14){
+      for(let wx=bx+4;wx<bx+bw-4;wx+=10){
+        if(Math.random()<0.35){
+          ctx.fillStyle=Math.random()>0.4?'rgba(255,200,80,0.45)':'rgba(100,140,255,0.35)';
+          ctx.fillRect(wx,wy,5,7);
+        }
+      }
+    }
+  });
+  ctx.rect(0,gy,w,h-gy);ctx.fill();
+}
+
 // ===== RENDERER =====
 const W=window.innerWidth,H=window.innerHeight;
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
@@ -282,7 +560,7 @@ class Enemy{
       if(dist<1.9&&this.atkTimer<=0){
         this.atkTimer=1.4+Math.random()*0.6;
         if(blockTimer>0.05){showCombo('BLOCKED!');flashGold();addScore(15);}
-        else{playerHP=Math.max(0,playerHP-10);updateHP();flashRed();showCombo('OUCH!');if(playerHP<=0)gameOver();}
+        else{playerHP=Math.max(0,playerHP-10);updateHP();flashRed();playHit();showCombo('OUCH!');if(playerHP<=0)gameOver();}
       }
     }
     this.mesh.position.copy(this.pos);
@@ -333,7 +611,7 @@ function getNearEnemy(){
 }
 function doPunch(){
   if(playerSt<14){showNotif('Too tired!');return;}
-  playerSt=Math.max(0,playerSt-14);updateSt();
+  playerSt=Math.max(0,playerSt-14);updateSt();playPunch();
   const t=getNearEnemy();
   if(!t){showCombo('MISS');return;}
   const dmg=16+Math.floor(Math.random()*10);
@@ -349,7 +627,7 @@ function doPunch(){
 }
 function doKick(){
   if(playerSt<22){showNotif('Too tired!');return;}
-  playerSt=Math.max(0,playerSt-22);updateSt();
+  playerSt=Math.max(0,playerSt-22);updateSt();playKick();
   const t=getNearEnemy();
   if(!t){showCombo('MISS');return;}
   const dmg=26+Math.floor(Math.random()*12);
@@ -572,8 +850,8 @@ function buildExitArrow(){
 function openLambeauDialog(){
   openDialog('PROF. LAMBEAU','🎓',
     '"You solved all three. In one night. Anonymously."\n\nHe holds up the chalk still on the board.\n\n"I\'ve been at MIT for 22 years. I\'ve never seen anything like this."\n\n"Who are you?"',
-    [{text:'"Nobody. Just the janitor."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{document.getElementById('title-screen').style.display='flex';},5500);}},
-     {text:'"Someone who can solve your problems."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{document.getElementById('title-screen').style.display='flex';},5500);}}]);
+    [{text:'"Nobody. Just the janitor."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{showTitleScreen();},5500);}},
+     {text:'"Someone who can solve your problems."',action:()=>{addScore(500);closeDialog();showNotif('★  CHAPTER I COMPLETE  ★\nScore: '+score+'\n\nLambeau finds Will in the parking lot the next morning.',5000);setTimeout(()=>{showTitleScreen();},5500);}}]);
 }
 
 function drawBoard(){
@@ -614,7 +892,7 @@ function openMath(){
     b.onclick=()=>{
       const btns=op.querySelectorAll('.math-opt');btns.forEach(x=>x.onclick=null);
       if(i===d.cor){
-        b.classList.add('correct');mathSolved++;addScore(350);
+        b.classList.add('correct');mathSolved++;addScore(350);playSuccess();
         showNotif('CORRECT\n'+d.note,3000);
         setTimeout(()=>{document.getElementById('math-ui').style.display='none';mathOpen=false;drawBoard();
           if(mathSolved===3){
@@ -623,7 +901,7 @@ function openMath(){
           }
         },1300);
       } else {
-        b.classList.add('wrong');btns[d.cor].classList.add('correct');
+        b.classList.add('wrong');btns[d.cor].classList.add('correct');playFail();
         showNotif("Wrong. Will wouldn't hesitate.",2000);
         setTimeout(()=>{document.getElementById('math-ui').style.display='none';mathOpen=false;},1300);
       }
@@ -934,7 +1212,7 @@ function showEnding(){
 '"I gotta go see about a girl."\n\nThe note sits on Sean\'s desk.\nThe car pulls onto the highway.\n3,000 miles west. California.\n\nFor the first time in your life — you\'re not\nrunning away from something. You\'re running toward it.\n\n★  FINAL SCORE: '+score+'  ★';
   const c=document.getElementById('dialog-choices');c.innerHTML='';
   const b=document.createElement('button');b.className='choice';b.textContent='[Play again]';
-  b.onclick=()=>{closeDialog();document.getElementById('title-screen').style.display='flex';};
+  b.onclick=()=>{closeDialog();showTitleScreen();};
   c.appendChild(b);
 }
 
@@ -976,7 +1254,8 @@ function selectChapter(n){
   selChap=n;
   document.querySelectorAll('.chap-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
 }
-function startGame(){document.getElementById('title-screen').style.display='none';loadChapter(selChap);}
+function startGame(){stopTitleAmbient();stopTitleAnimation();document.getElementById('title-screen').style.display='none';loadChapter(selChap);}
+function showTitleScreen(){document.getElementById('title-screen').style.display='flex';initTitleScreen();if(audioEnabled)startTitleAmbient();}
 function loadChapter(n){
   curChap=n;clearScene();
   playerHP=100;playerSt=100;score=0;combo=0;updateHP();updateSt();
@@ -1071,6 +1350,7 @@ function loop(){
 
   renderer.render(scene,camera);
 }
+initTitleScreen();
 loop();
 </script>
 </body>
